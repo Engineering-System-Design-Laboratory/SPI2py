@@ -19,14 +19,11 @@ classifiers = [
 
 dependencies = [
     "numpy",
-    "jupyter",
     "matplotlib",
     "pyvista",
     "openmdao",
     "jax",
     "jaxlib",
-    "trimesh",
-    "rtree",  # Needed for Trimesh, but not included in its dependencies
 ]
 
 [project.optional-dependencies]

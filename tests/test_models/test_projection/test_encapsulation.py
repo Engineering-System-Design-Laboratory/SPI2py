@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from SPI2py.models.projection.encapsulation import overlap_volume_sphere_sphere
+from SPI2py.models.geometry.encapsulation import overlap_volume_sphere_sphere
 
 def test_perfect_overlap():
     r_1 = jnp.array([5.0])

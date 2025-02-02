@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-
+# TODO Delete?
 
 def translate_linear_spline(start_point, control_points, end_point):
 
@@ -23,6 +23,7 @@ def translate_linear_spline(start_point, control_points, end_point):
     translated_positions = positions + translations
 
     return translated_positions
+
 
 def compute_line_segment_intermediate_positions(start_position, stop_position, num_spheres_per_segment):
 

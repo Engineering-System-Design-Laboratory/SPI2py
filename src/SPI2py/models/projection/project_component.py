@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from .encapsulation import overlap_volume_sphere_sphere
+from SPI2py.models.geometry.encapsulation import overlap_volume_sphere_sphere
 
 def calculate_pseudo_densities(sphere_positions, sphere_radii, sample_points, sample_radii, element_bounds):
     """

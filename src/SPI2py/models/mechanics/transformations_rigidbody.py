@@ -4,65 +4,69 @@
 
 import jax.numpy as jnp
 
-def assemble_transformation_matrix(translation, rotation):
 
-    # Ensure translation and rotation are proper shapes
-    if translation.shape != (3, 1):
-        translation = translation.reshape((3, 1))
+def transform_points(positions, reference_point, translation, rotation):
+    """
+    Transforms the given positions by applying rotation and translation with respect to a reference point.
 
-    if rotation.shape != (3):
-        rotation = rotation.reshape((3))
+    Parameters:
+    - positions: numpy array of shape (N, 3), the points to be transformed.
+    - reference_point: numpy array of shape (3,), the reference point for rotation.
+    - translation: numpy array of shape (3,), the translation vector.
+    - rotation: numpy array of shape (3,), the rotation angles (alpha, beta, gamma) in radians.
 
-    # Initialize the transformation matrix
+    Returns:
+    - transformed_positions: numpy array of shape (N, 3), the transformed points.
+    """
+
+    # Ensure inputs are proper shapes
+    translation = jnp.asarray(translation).reshape(3)
+    rotation = jnp.asarray(rotation).reshape(3)
+    reference_point = jnp.asarray(reference_point).reshape(3)
+    positions = jnp.asarray(positions)
+
+    # Assemble the transformation matrix
     t = jnp.eye(4, dtype=jnp.float64)
 
-    # Insert the translation vector
-    # t = t.at[:3, 3].set(translation.flatten())  # JAX update syntax
-    t = t.at[:3, [3]].set(translation)  # JAX update syntax
-
-    # Unpack the rotation angles (Euler)
-    a, b, g = rotation  # alpha, beta, gamma
+    # Unpack the rotation angles (Euler angles)
+    alpha, beta, gamma = rotation  # rotation around x, y, z axes respectively
 
     # Calculate rotation matrix components
-    ca, cb, cg = jnp.cos(a), jnp.cos(b), jnp.cos(g)
-    sa, sb, sg = jnp.sin(a), jnp.sin(b), jnp.sin(g)
+    ca, cb, cg = jnp.cos(alpha), jnp.cos(beta), jnp.cos(gamma)
+    sa, sb, sg = jnp.sin(alpha), jnp.sin(beta), jnp.sin(gamma)
 
-    # Calculate rotation matrix (R = R_z(gamma) @ R_y(beta) @ R_x(alpha))
-    r = jnp.array([[cb * cg, sa * sb * cg - ca * sg, ca * sb * cg + sa * sg],
-                   [cb * sg, sa * sb * sg + ca * cg, ca * sb * sg - sa * cg],
-                   [-sb, sa * cb, ca * cb]])
+    # Rotation matrix
+    r = jnp.array([
+        [cb * cg, sa * sb * cg - ca * sg, ca * sb * cg + sa * sg],
+        [cb * sg, sa * sb * sg + ca * cg, ca * sb * sg - sa * cg],
+        [-sb,     sa * cb,                ca * cb]
+    ])
 
-    # Insert the rotation matrix
-    t = t.at[:3, :3].set(r)
+    # t[:3, :3] = r
+    t = t.at[:3, :3].set(r)  # JAX update syntax
 
-    return t
+    # Insert the translation vector
+    # t[:3, 3] = translation
+    t = t.at[:3, [3]].set(translation)  # JAX update syntax
 
-
-def apply_transformation_matrix(reference_point, positions, transformation_matrix):
-    """
-    Assume transposed...?
-    """
-
-    # Center the object about its reference position
+    # Apply the transformation matrix
+    # Shift positions by the reference point
     positions_shifted = positions - reference_point
 
-    # Pad the positions with ones
-    ones = jnp.ones((1, positions_shifted.shape[1]))
-    positions_shifted_padded = jnp.vstack((positions_shifted, ones))
+    # Convert to homogeneous coordinates by adding a column of ones
+    ones = jnp.ones((positions_shifted.shape[0], 1))
+    positions_homogeneous = jnp.hstack([positions_shifted, ones])  # Shape: (N, 4)
 
     # Apply the transformation
-    transformed_positions_shifted_padded = transformation_matrix @ positions_shifted_padded
+    transformed_positions_homogeneous = positions_homogeneous @ t.T  # Shape: (N, 4)
 
-    # Remove the padding
-    transformed_positions_shifted = transformed_positions_shifted_padded[:3, :]
+    # Convert back from homogeneous coordinates
+    transformed_positions_shifted = transformed_positions_homogeneous[:, :3]
 
-    # Shift the object back to its original position
+    # Shift back by adding the reference point
     transformed_positions = transformed_positions_shifted + reference_point
 
     return transformed_positions
-
-
-
 
 
 
