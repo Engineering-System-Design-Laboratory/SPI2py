@@ -2,7 +2,7 @@ import jax.numpy as jnp
 from jax import jacfwd
 from openmdao.api import ExplicitComponent, Group
 
-from ..models.kinematics.distance_calculations import signed_distances_spheres_spheres
+from ..models.computational_geometry.distance_calculations import signed_distances_spheres_spheres
 
 
 # class CombinatorialCollisionDetection(Group):

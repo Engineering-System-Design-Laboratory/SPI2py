@@ -3,7 +3,7 @@ From Norato's paper...
 """
 
 import numpy as np
-from ..kinematics.distance_calculations_vectorized import minimum_distance_segment_segment
+from ..computational_geometry.distance_calculations_vectorized import minimum_distance_segment_segment
 
 
 def signed_distance(x, x1, x2, r_b):

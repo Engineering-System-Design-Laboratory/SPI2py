@@ -6,7 +6,7 @@ from openmdao.api import ExplicitComponent, Group
 
 from ..models.utilities.inputs import read_xyzr_file
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max
-from ..models.kinematics.rigid_body_transformations import assemble_transformation_matrix, \
+from ..models.computational_geometry.rigid_body_transformations import assemble_transformation_matrix, \
     apply_transformation_matrix
 from .projection import Mesh, calculate_pseudo_densities
 from ..models.projection.project_interconnects_vectorized import calculate_combined_densities

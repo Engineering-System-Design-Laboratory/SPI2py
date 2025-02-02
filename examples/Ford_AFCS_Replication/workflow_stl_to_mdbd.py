@@ -3,7 +3,7 @@
 """
 
 import pyvista as pv
-from SPI2py.models.geometry.maximal_disjoint_ball_decomposition import mdbd
+from SPI2py.models.mechanics.maximal_disjoint_ball_decomposition import mdbd
 
 # Create an STL file for each part
 radiator_and_ion_exchanger = pv.Cube(bounds=(0.0, 2.850, 0.0, 0.830, 0.0, 0.830))

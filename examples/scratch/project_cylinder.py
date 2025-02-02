@@ -1,6 +1,6 @@
 import numpy as np
 import pyvista as pv
-from SPI2py.models.kinematics.distance_calculations_vectorized import minimum_distance_segment_segment
+from SPI2py.models.computational_geometry.distance_calculations_vectorized import minimum_distance_segment_segment
 
 
 def plot_density_grid(grid_centers, spacing,

@@ -1,5 +1,5 @@
 import numpy as np
-from SPI2py.models.kinematics.distance_calculations import minimum_distance_segment_segment
+from SPI2py.models.computational_geometry.distance_calculations import minimum_distance_segment_segment
 
 # AB is a Point and CD is a Point
 

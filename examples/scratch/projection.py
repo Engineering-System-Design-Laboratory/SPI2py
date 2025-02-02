@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import pyvista as pv
-from SPI2py.models.kinematics.distance_calculations import percentage_overlap
+from SPI2py.models.computational_geometry.distance_calculations import percentage_overlap
 
 # # Example: Cube center at (0, 0, 0), side length 2, recursion level 1
 # cube_center = (0, 0, 0)

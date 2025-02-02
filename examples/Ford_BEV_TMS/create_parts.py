@@ -2,7 +2,6 @@
 
 """
 
-import pyvista as pv
 from SPI2py.models.geometry.spherical_decomposition import pseudo_mdbd
 
 # Perform MDBD on each part

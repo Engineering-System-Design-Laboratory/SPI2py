@@ -1,11 +1,13 @@
 import numpy as np
 import pyvista as pv
 
-# TODO MOVE TO API
 
-def plot_mdbd(positions, radii, color='green'):
+def plot_stl_model():
+    # TODO: Implement
+    pass
 
-    plotter = pv.Plotter()
+
+def plot_mdbd_model(plotter, positions, radii, color='green'):
 
     spheres = []
     for i in range(len(positions)):
