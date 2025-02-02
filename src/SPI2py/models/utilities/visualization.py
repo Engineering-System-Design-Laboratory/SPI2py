@@ -1,6 +1,7 @@
 import numpy as np
 import pyvista as pv
-from ..geometry import create_cylinders, get_aabb_bounds
+from ..geometry.cylinders import create_cylinders
+from ..geometry.spheres import get_aabb_indices, get_aabb_bounds
 
 
 

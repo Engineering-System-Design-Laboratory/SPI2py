@@ -1,11 +1,11 @@
 import numpy as np
 import pyvista as pv
-from create import create_grid
-from mdbd import get_aabb_indices
-from volume import volume_intersection_two_spheres
-from kernel import apply_kernel
-from rigid_body_transformation import transform_points
-from visualization import plot_grid, plot_spheres, plot_AABB, plot_stl_file
+from SPI2py.models.projection.grid import create_grid
+from SPI2py.models.geometry.spheres import get_aabb_indices
+from SPI2py.models.geometry.intersection import volume_intersection_two_spheres
+from SPI2py.models.projection.kernels_uniform import apply_kernel
+from SPI2py.models.mechanics.transformations_rigidbody import transform_points
+from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB, plot_stl_file
 
 
 def calculate_pseudo_densities(element_centers, element_size, object_positions, object_radii):

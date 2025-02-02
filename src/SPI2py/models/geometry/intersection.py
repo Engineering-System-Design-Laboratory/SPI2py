@@ -24,6 +24,7 @@ def volume_intersection_two_spheres(r_1, r_2, d):
 
     return overlap_volume
 
+
 def total_overlap_volume(sphere_centers, sphere_radii):
 
     centers_a = sphere_centers.reshape(-1, 1, 3)

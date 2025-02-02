@@ -8,7 +8,7 @@ import jax.numpy as jnp
 def transform_points(positions, reference_point, translation, rotation):
     """
     Transforms the given positions by applying rotation and translation with respect to a reference point.
-
+    TODO Finalize at/assign syntax for JAX
     Parameters:
     - positions: numpy array of shape (N, 3), the points to be transformed.
     - reference_point: numpy array of shape (3,), the reference point for rotation.
@@ -47,7 +47,7 @@ def transform_points(positions, reference_point, translation, rotation):
 
     # Insert the translation vector
     # t[:3, 3] = translation
-    t = t.at[:3, [3]].set(translation)  # JAX update syntax
+    t = t.at[:3, 3].set(translation)  # JAX update syntax
 
     # Apply the transformation matrix
     # Shift positions by the reference point
