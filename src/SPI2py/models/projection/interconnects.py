@@ -1,16 +1,13 @@
-"""
-From Norato's paper...
-"""
-
-import numpy as np
+import jax.numpy as jnp
 from ..geometry.cylinders import create_cylinders
 from ..mechanics.distance import minimum_distance_segment_segment
 from ..projection.kernels_uniform import apply_kernel
+from ..geometry.spheres import get_aabb_indices
 
 def signed_distance(x, x1, x2, r_b):
 
     # Convert output from JAX.numpy to numpy
-    d_be = np.array(minimum_distance_segment_segment(x, x, x1, x2))
+    d_be = jnp.array(minimum_distance_segment_segment(x, x, x1, x2))
 
     phi_b = r_b - d_be
 
@@ -24,43 +21,44 @@ def regularized_Heaviside(x):
 
 def density(phi_b, r):
     ratio = phi_b / r
-    rho = np.where(ratio < -1, 0,
-                   np.where(ratio > 1, 1,
-                            regularized_Heaviside(ratio)))
+    rho = jnp.where(ratio < -1, 0,
+                    jnp.where(ratio > 1, 1,
+                              regularized_Heaviside(ratio)))
     return rho
 
 
-def calculate_combined_densities(positions, radii, x1, x2, r):
+# def calculate_combined_densities(positions, radii, x1, x2, r):
+#
+#     # Expand dimensions to allow broadcasting
+#     positions_expanded = positions[..., jnp.newaxis, :]  # shape becomes (n, m, o, p, 1, 3)
+#     x1_expanded = x1[jnp.newaxis, jnp.newaxis, jnp.newaxis, :, :]  # shape becomes (1, 1, 1, q, 3)
+#     x2_expanded = x2[jnp.newaxis, jnp.newaxis, jnp.newaxis, :, :]  # shape becomes (1, 1, 1, q, 3)
+#     r_T_expanded = r.T[jnp.newaxis, jnp.newaxis, jnp.newaxis, :, :]  # shape becomes (1, 1, 1, q, 1)
+#
+#     # Vectorized signed distance and density calculations using your distance function
+#     phi = signed_distance(positions_expanded, x1_expanded, x2_expanded, r_T_expanded)
+#
+#     rho = density(phi, radii)
+#
+#     # Sum densities across all cylinders
+#     # TODO Sanity check multiple spheres... sum 4,5
+#     # combined_density = np.clip(np.sum(rho, axis=4), 0, 1)
+#
+#     # Combine the pseudo densities for all cylinders in each kernel sphere
+#     # Collapse the last axis to get the combined density for each kernel sphere
+#     combined_density = jnp.sum(rho, axis=4, keepdims=False)
+#
+#     # Combine the pseudo densities for all kernel spheres in one grid
+#     combined_density = jnp.sum(combined_density, axis=3, keepdims=False)
+#
+#     # Clip
+#     combined_density = jnp.clip(combined_density, 0, 1)
+#
+#     return combined_density
 
-    # Expand dimensions to allow broadcasting
-    positions_expanded = positions[..., np.newaxis, :]  # shape becomes (n, m, o, p, 1, 3)
-    x1_expanded = x1[np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, q, 3)
-    x2_expanded = x2[np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, q, 3)
-    r_T_expanded = r.T[np.newaxis, np.newaxis, np.newaxis, :, :]  # shape becomes (1, 1, 1, q, 1)
-
-    # Vectorized signed distance and density calculations using your distance function
-    phi = signed_distance(positions_expanded, x1_expanded, x2_expanded, r_T_expanded)
-
-    rho = density(phi, radii)
-
-    # Sum densities across all cylinders
-    # TODO Sanity check multiple spheres... sum 4,5
-    # combined_density = np.clip(np.sum(rho, axis=4), 0, 1)
-
-    # Combine the pseudo densities for all cylinders in each kernel sphere
-    # Collapse the last axis to get the combined density for each kernel sphere
-    combined_density = np.sum(rho, axis=4, keepdims=False)
-
-    # Combine the pseudo densities for all kernel spheres in one grid
-    combined_density = np.sum(combined_density, axis=3, keepdims=False)
-
-    # Clip
-    combined_density = np.clip(combined_density, 0, 1)
-
-    return combined_density
-
-def calculate_densities(el_centers, el_size,
-                        cyl_control_points, cyl_radius, kernel_pos, kernel_rad):
+def calculate_densities(grid_centers, grid_size,
+                        cyl_points, cyl_radius,
+                        kernel_points, kernel_radii):
     """
     Projects the points to the mesh and calculates the pseudo-densities
 
@@ -73,7 +71,6 @@ def calculate_densities(el_centers, el_size,
     cylinder_stops: (n_segments, 3) tensor
     cylinder_radii: (n_segments, 1) tensor
 
-    # TODO Fix for Q cylinders
     cylinder_starts_expanded: (1, 1, 1, n_segments, 3) tensor
     cylinder_stops_expanded: (1, 1, 1, n_segments, 3) tensor
     cylinder_radii_expanded: (1, 1, 1, n_segments, 1) tensor
@@ -82,51 +79,57 @@ def calculate_densities(el_centers, el_size,
     """
 
     # Create the cylinders
-    cyl_starts, cyl_stops, cyl_rad = create_cylinders(cyl_control_points, cyl_radius)
+    cyl_starts, cyl_stops, cyl_rad = create_cylinders(cyl_points, cyl_radius)
 
     # Unpack the AABB indices
-    # i1, i2, j1, j2, k1, k2 = get_aabb_indices(el_centers, el_size, cyl_control_points, cyl_radius)
+    i1, i2, j1, j2, k1, k2 = get_aabb_indices(grid_centers, grid_size, cyl_points, cyl_radius)
 
+    # Extract grid dimensions
+    grid_nx, grid_ny, grid_nz, _, _ = grid_centers.shape
+    aabb_nx, aabb_ny, aabb_nz = (i2 - i1 + 1), (j2 - j1 + 1), (k2 - k1 + 1)
+    cyl_count, _ = cyl_rad.shape
+    kernel_count, _ = kernel_points.shape
 
-    # Preallocate the pseudo-densities
-    n_el_x, n_el_y, n_el_z, _, _ = el_centers.shape
-    # all_densities = np.zeros((n_el_x, n_el_y, n_el_z))
+    # Initialize the output density array
+    all_densities = jnp.zeros((grid_nx, grid_ny, grid_nz), dtype='float64')
 
-    # Slice the mesh elements that are within the object's AABB
+    # Extract the active grid region within the object's AABB
+    active_grid_centers = grid_centers[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1]
 
-    # Apply the kernel to the mesh elements
-    # TODO Fix variable scopes
-    mesh_positions, mesh_radii = apply_kernel(el_centers, el_size, kernel_pos, kernel_rad)
+    # Apply the kernel to active grid elements
+    kernel_points, kernel_radii = apply_kernel(active_grid_centers, grid_size, kernel_points, kernel_radii)
 
-    # Calculate the volume of the spheres in each mesh element
-    element_sample_volumes = (4 / 3) * np.pi * mesh_radii ** 3
-    element_volumes = np.sum(element_sample_volumes, axis=3, keepdims=True)
-
+    # Calculate sample volumes and element volumes
+    sample_volumes = (4 / 3) * jnp.pi * kernel_radii ** 3
+    element_volumes = jnp.sum(sample_volumes, axis=3, keepdims=True)
 
     # Expand the arrays to allow broadcasting
-    cyl_rad_transposed = cyl_rad.T
-    cyl_rad_transposed_expanded = np.expand_dims(cyl_rad_transposed, axis=(0, 1, 2))
-
-    mesh_positions_expanded = np.expand_dims(mesh_positions, axis=(4,))
-    cyl_starts_expanded = np.expand_dims(cyl_starts, axis=(0, 1, 2))
-    cyl_stops_expanded = np.expand_dims(cyl_stops, axis=(0, 1, 2))
+    # Transpose object radii for broadcasting
+    cyl_starts_bc = cyl_starts.reshape(1, 1, 1, cyl_count, 3)
+    cyl_stops_bc = cyl_stops.reshape(1, 1, 1, cyl_count, 3)
+    cyl_rad_bc = cyl_rad.T.reshape(1, 1, 1, cyl_count, 1)
+    kernel_points_bc = kernel_points.reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count, 1, 3)
 
     # Vectorized signed distance and density calculations using your distance function
-    phi = signed_distance(mesh_positions_expanded, cyl_starts_expanded, cyl_stops_expanded, cyl_rad_transposed_expanded)
+    distances = signed_distance(kernel_points_bc, cyl_starts_bc, cyl_stops_bc, cyl_rad_bc)
 
     # Fix rho for mesh_radii?
-    rho = density(phi, mesh_radii)
+    densities = density(distances, kernel_radii)
 
     # Sum densities across all cylinders
-
     # Combine the pseudo densities for all cylinders in each kernel sphere
     # Collapse the last axis to get the combined density for each kernel sphere
-    combined_density = np.sum(rho, axis=4, keepdims=False)
+    densities = jnp.sum(densities, axis=4)
 
     # Combine the pseudo densities for all kernel spheres in one grid
-    combined_density = np.sum(combined_density, axis=3, keepdims=False)
+    # densities = jnp.sum(densities, axis=3, keepdims=False)
+    densities = jnp.sum(densities, axis=3)
+
+    # Store the densities in the output array
+    # TODO Why black box?
+    all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
 
     # Clip
     # combined_density = np.clip(combined_density, 0, 1)
 
-    return combined_density, mesh_positions, mesh_radii
+    return densities, kernel_points, kernel_radii

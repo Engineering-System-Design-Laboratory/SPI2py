@@ -6,8 +6,7 @@ from SPI2py.models.projection.components import calculate_pseudo_densities
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB, plot_stl_file
 
 
-# Define a 5x5x5 grid
-# TODO Fix so bounds inclusive (?)
+# Create grid
 el_size = 0.5
 el_centers = create_grid(0, 2, 0, 6.5, 0,  4.5, element_size=el_size)
 

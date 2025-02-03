@@ -39,7 +39,7 @@ def calculate_pseudo_densities(grid_centers, grid_size, obj_points, obj_radii, k
 
     # Extract grid dimensions
     grid_nx, grid_ny, grid_nz, _, _ = grid_centers.shape
-    aabb_nx, aabb_ny, aabb_nz = i2 - i1 + 1, j2 - j1 + 1, k2 - k1 + 1
+    aabb_nx, aabb_ny, aabb_nz = (i2 - i1 + 1), (j2 - j1 + 1), (k2 - k1 + 1)
     obj_count, _ = obj_points.shape
     kernel_count, _ = kernel_points.shape
 
@@ -57,6 +57,7 @@ def calculate_pseudo_densities(grid_centers, grid_size, obj_points, obj_radii, k
     element_volumes = jnp.sum(sample_volumes, axis=3, keepdims=True)
 
     # Expand dimensions for broadcasting
+    # Transpose object radii for broadcasting
     obj_points_bc = obj_points.reshape(1, 1, 1, 1, obj_count, 3)
     obj_radii_bc = obj_radii.T.reshape(1, 1, 1, 1, obj_count)
     kernel_points_bc = kernel_points.reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count, 1, 3)

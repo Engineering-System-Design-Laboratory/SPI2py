@@ -1,13 +1,9 @@
 import numpy as np
 import pyvista as pv
-from SPI2py.models.geometry.cylinders import create_cylinders
-from SPI2py.models.geometry.spheres import get_aabb_indices, get_aabb_bounds
-from SPI2py.models.mechanics.transformations_rigidbody import transform_points
+
 from SPI2py.models.projection.grid import create_grid
 from SPI2py.models.projection.interconnects import calculate_densities
-from SPI2py.models.projection.kernels_uniform import apply_kernel
-from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_AABB, plot_stl_file
-from SPI2py.models.mechanics.distance import signed_distance
+from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_AABB
 
 
 # Create grid
@@ -28,7 +24,7 @@ kernel_pos = xyzr_kernel[:, :3]
 kernel_rad = xyzr_kernel[:, 3:4]
 
 # Create line segment arrays
-cyl_control_points = np.array([[0.25, 0.25, 1], [2, 2, 1], [2, 4, 1]])
+cyl_control_points = np.array([[0.25, 0.25, 2], [2, 2, 1], [2, 4, 1]])
 cyl_radius = np.array([0.25])
 # cyl_control_points = np.array([[0, 0, 0], [2, 0, 0], [2, 4, 0]])
 # cyl_radius = np.array([0.25])
@@ -38,15 +34,24 @@ cyl_radius = np.array([0.25])
 densities, sample_positions, sample_radii = calculate_densities(el_centers, el_size, cyl_control_points, cyl_radius, kernel_pos, kernel_rad)
 
 # Plot
-plotter = pv.Plotter(shape=(1, 2), window_size=(1500, 500))
+plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
 
-# Plot the grid without the kernel
-plot_grid(plotter, (0, 0), el_centers, el_size, densities=densities)
+# Plot the interconnect
+plot_grid(plotter, (0, 0), el_centers, el_size, densities=None)
+plot_capsules(plotter, (0, 0), cyl_control_points, cyl_radius, 'blue')
+plot_AABB(plotter, (0, 0), cyl_control_points, cyl_radius, color='blue')
 
-# Plot the grid with the kernel
-plot_grid(plotter, (0, 1), el_centers, el_size, densities=None)
-plot_spheres(plotter, (0, 1), sample_positions, sample_radii, 'lightgray')
-plot_capsules(plotter, (0, 1), cyl_control_points, cyl_radius, 'blue')
+# Plot the kernel
+plot_grid(plotter, (1, 0), el_centers, el_size, densities=None)
+plot_spheres(plotter, (1, 0), sample_positions, sample_radii, 'lightgray')
+
+# Plot the pseudo-densities
+plot_grid(plotter, (1, 1), el_centers, el_size, densities=densities)
+
+# # Plot the grid with the kernel
+# plot_grid(plotter, (0, 1), el_centers, el_size, densities=None)
+# plot_spheres(plotter, (0, 1), sample_positions, sample_radii, 'lightgray')
+# plot_capsules(plotter, (0, 1), cyl_control_points, cyl_radius, 'blue')
 
 plotter.show_bounds(all_edges=True, location='outer')
 plotter.show_axes()
