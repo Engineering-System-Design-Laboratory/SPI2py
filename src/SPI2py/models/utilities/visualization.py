@@ -26,7 +26,7 @@ def plot_grid(plotter, subplot_index, centers, size, densities=None, min_opacity
                 box = pv.Cube(center=pos, x_length=size, y_length=size, z_length=size)
 
                 if densities is not None:
-                    opacity = max(min_opacity, min(densities[mi, ni, oi], 1))
+                    opacity = max(min_opacity, min(densities[mi, ni, oi], 1.0))
                 else:
                     opacity = min_opacity
 
