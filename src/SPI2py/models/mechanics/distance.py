@@ -124,13 +124,3 @@ def signed_distances_capsules_capsules(centers_a: jnp.ndarray,
     signed_distances = delta_radii - delta_positions
 
     return signed_distances
-
-
-def signed_distance(x, x1, x2, r_b):
-
-    # Convert output from JAX.numpy to numpy
-    d_be = jnp.array(minimum_distance_segment_segment(x, x, x1, x2))
-
-    phi_b = r_b - d_be
-
-    return phi_b

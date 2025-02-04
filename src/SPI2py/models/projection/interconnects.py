@@ -1,8 +1,9 @@
 import jax.numpy as jnp
 from ..geometry.cylinders import create_cylinders
-from ..mechanics.distance import minimum_distance_segment_segment
+from ..mechanics.distance import minimum_distance_segment_segment, signed_distances_capsules_capsules
 from ..projection.kernels_uniform import apply_kernel
 from ..geometry.spheres import get_aabb_indices
+
 
 def signed_distance(x, x1, x2, r_b):
 
@@ -112,6 +113,7 @@ def calculate_densities(grid_centers, grid_size,
 
     # Vectorized signed distance and density calculations using your distance function
     distances = signed_distance(kernel_points_bc, cyl_starts_bc, cyl_stops_bc, cyl_rad_bc)
+    # distances = signed_distances_capsules_capsules(kernel_points_bc, cyl_starts_bc, cyl_stops_bc, cyl_rad_bc)
 
     # Fix rho for mesh_radii?
     densities = density(distances, kernel_radii)
