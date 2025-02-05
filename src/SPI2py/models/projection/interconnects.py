@@ -5,7 +5,7 @@ Geometry Project by Norato...
 import jax.numpy as jnp
 from ..geometry.cylinders import create_cylinders
 from ..mechanics.distance import minimum_distance_segment_segment, signed_distances_capsules_capsules
-from ..projection.kernels_uniform import apply_kernel
+from ..projection.grid_kernels import apply_kernel
 from ..geometry.spheres import get_aabb_indices
 
 
@@ -183,6 +183,31 @@ def calculate_densities(grid_centers, grid_size,
 #
 #     return combined_density
 
+# def calculate_combined_densities(positions, radii, X1, X2, R, mode):
+#     m, n, p = positions.shape[0], positions.shape[1], positions.shape[2]
+#     densities = np.zeros((m, n, p))
+#     for i in range(m):
+#         for j in range(n):
+#             for k in range(p):
+#                 position = positions[i, j, k]
+#                 radius = radii[i, j, k]
+#                 combined_density = calculate_combined_density(position, radius, X1, X2, R, mode)
+#                 densities[i, j, k] += combined_density
+#
+#     return densities
+
+# def calculate_combined_density(position, radius, X1, X2, R):
+#
+#     combined_density = 0
+#     for x1, x2, r in zip(X1, X2, R):
+#         density = calculate_density(position, radius, x1, x2, r)
+#         combined_density += density
+#
+#     # Clip the combined densities to be between 0 and 1
+#     combined_density = max(0, min(combined_density, 1))
+#
+#     return combined_density
+#
 # def calculate_combined_densities(positions, radii, X1, X2, R, mode):
 #     m, n, p = positions.shape[0], positions.shape[1], positions.shape[2]
 #     densities = np.zeros((m, n, p))

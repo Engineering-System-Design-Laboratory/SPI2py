@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from ..geometry.spheres import get_aabb_indices
 from ..geometry.intersection import volume_intersection_two_spheres
-from ..projection.kernels_uniform import apply_kernel
+from ..projection.grid_kernels import apply_kernel
 
 
 def calculate_pseudo_densities(grid_centers, grid_size, obj_points, obj_radii, kernel_points, kernel_radii):
