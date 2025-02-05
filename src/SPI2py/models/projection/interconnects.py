@@ -1,3 +1,7 @@
+"""
+Geometry Project by Norato...
+"""
+
 import jax.numpy as jnp
 from ..geometry.cylinders import create_cylinders
 from ..mechanics.distance import minimum_distance_segment_segment, signed_distances_capsules_capsules
@@ -10,6 +14,7 @@ def signed_distance(x, x1, x2, r_b):
     # Convert output from JAX.numpy to numpy
     d_be = jnp.array(minimum_distance_segment_segment(x, x, x1, x2))
 
+    # EQ 8 (order reversed, this is a confirmed typo in the paper)
     phi_b = r_b - d_be
 
     return phi_b
@@ -21,11 +26,40 @@ def regularized_Heaviside(x):
 
 
 def density(phi_b, r):
-    ratio = phi_b / r
+    ratio = phi_b / r  # EQ 2
     rho = jnp.where(ratio < -1, 0,
                     jnp.where(ratio > 1, 1,
                               regularized_Heaviside(ratio)))
     return rho
+
+# def d_b(x_e, x_1b, x_2b):
+#     """Norato"""
+#     x_2b1b = x_2b - x_1b  # EQ 9
+#     x_e1b = x_e - x_1b  # EQ 9
+#     x_e2b = x_e - x_2b  # EQ 9
+#     l_b = np.linalg.norm(x_2b1b)  # EQ 10
+#     a_b = x_2b1b / l_b  # EQ 11
+#     l_be = np.dot(a_b, x_e1b)  # 12  TODO Dot or mult?
+#     r_be = np.linalg.norm(x_e1b - (l_be * a_b))  # EQ 13
+#
+#     # EQ 14
+#     if l_be <= 0:
+#         return np.linalg.norm(x_e1b)
+#     elif l_be > l_b:
+#         return np.linalg.norm(x_e2b)
+#     else:
+#         return r_be
+
+# def phi_b_RevSign_AltDist(x, x1, x2, r_b):
+#
+#     d_be, _ = minimum_distance_segment_segment(x, x, x1, x2)
+#
+#     d_be = float(d_be)
+#
+#     # EQ 8 (order reversed)
+#     phi_b = r_b - d_be
+#
+#     return phi_b
 
 
 # def calculate_combined_densities(positions, radii, x1, x2, r):
@@ -135,3 +169,29 @@ def calculate_densities(grid_centers, grid_size,
     # combined_density = np.clip(combined_density, 0, 1)
 
     return densities, kernel_points, kernel_radii
+
+
+# def calculate_combined_density(position, radius, X1, X2, R, mode):
+#
+#     combined_density = 0
+#     for x1, x2, r in zip(X1, X2, R):
+#         density = calculate_density(position, radius, x1, x2, r, mode)
+#         combined_density += density
+#
+#     # Clip the combined densities to be between 0 and 1
+#     combined_density = max(0, min(combined_density, 1))
+#
+#     return combined_density
+
+# def calculate_combined_densities(positions, radii, X1, X2, R, mode):
+#     m, n, p = positions.shape[0], positions.shape[1], positions.shape[2]
+#     densities = np.zeros((m, n, p))
+#     for i in range(m):
+#         for j in range(n):
+#             for k in range(p):
+#                 position = positions[i, j, k]
+#                 radius = radii[i, j, k]
+#                 combined_density = calculate_combined_density(position, radius, X1, X2, R, mode)
+#                 densities[i, j, k] += combined_density
+#
+#     return densities
