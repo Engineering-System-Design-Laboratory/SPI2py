@@ -24,6 +24,7 @@ dependencies = [
     "openmdao",
     "jax",
     "jaxlib",
+    "chex",
 ]
 
 [project.optional-dependencies]

@@ -1,4 +1,5 @@
 import jax.numpy as jnp
+from chex import assert_shape, assert_type
 from ..geometry.spheres import get_aabb_indices
 from ..geometry.intersection import volume_intersection_two_spheres
 from ..projection.grid_kernels import apply_kernel
@@ -33,6 +34,21 @@ def calculate_pseudo_densities(grid_centers, grid_size, obj_points, obj_radii, k
         Kernel radii in the grid's active area.
     """
 
+    # Check the input shapes
+    assert_shape(grid_centers, (None, None, None, None, 3))
+    assert_shape(grid_size, ())
+    assert_shape(obj_points, (None, 3))
+    assert_shape(obj_radii, (None, 1))
+    assert_shape(kernel_points, (None, 3))
+    assert_shape(kernel_radii, (None, 1))
+
+    # Check the input types
+    assert_type(grid_centers, "float64")
+    assert_type(grid_size, "float64")
+    assert_type(obj_points, "float64")
+    assert_type(obj_radii, "float64")
+    assert_type(kernel_points, "float64")
+    assert_type(kernel_radii, "float64")
 
     # Unpack the AABB indices
     i1, i2, j1, j2, k1, k2 = get_aabb_indices(grid_centers, grid_size, obj_points, obj_radii)
