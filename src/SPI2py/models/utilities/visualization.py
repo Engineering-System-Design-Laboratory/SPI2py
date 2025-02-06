@@ -25,8 +25,6 @@ def plot_grid(plotter, subplot_index, centers, size, densities=None, min_opacity
 
     # If densities are provided, assign them as a scalar array.
     # Note: glyphs don’t directly support per-glyph opacity.
-    # You might later map these scalars to colors (with alpha) using a lookup table,
-    # or group the points by similar opacity values if needed.
     if densities is not None:
         flat_densities = densities.flatten()
         # Clamp densities to the range [min_opacity, 1.0]
@@ -38,7 +36,6 @@ def plot_grid(plotter, subplot_index, centers, size, densities=None, min_opacity
     glyphs = points.glyph(orient=False, scale=False, geom=cube_template)
 
     # Add the combined glyph mesh.
-    # If you don’t need per-cube opacity, you can use a constant opacity here.
     plotter.add_mesh(glyphs, color='black', opacity=min_opacity, lighting=False)
 
 
@@ -48,7 +45,6 @@ def plot_spheres(plotter, subplot_index, positions, radii, color, opacity=0.15):
     plotter.render_window.SetMultiSamples(0)
 
     # Create a sphere template.
-    # Use low resolution if acceptable (adjust theta/phi resolution to balance quality and speed)
     sphere_template = pv.Sphere(theta_resolution=8, phi_resolution=8)
 
     # Flatten positions and radii
