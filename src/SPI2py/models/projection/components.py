@@ -109,26 +109,17 @@ def calculate_pseudo_densities(grid_centers, grid_size, obj_points, obj_radii, k
     kernel_radii_bc = kernel_radii.reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count, 1)
 
     # Compute distances between kernel and object points
-    # distances = jnp.linalg.norm(kernel_points_bc - obj_points_bc, axis=-1)
-    distances = signed_distance(kernel_points_bc, obj_points_bc, obj_points_bc, kernel_radii_bc)
-    # distances = min
+    distances = jnp.linalg.norm(kernel_points_bc - obj_points_bc, axis=-1)
 
     # Calculate volume overlaps
-    # overlaps = volume_intersection_two_spheres(obj_radii_bc, kernel_radii, distances)
-    # element_overlaps = jnp.sum(overlaps, axis=4, keepdims=True)
+    overlaps = volume_intersection_two_spheres(obj_radii_bc, kernel_radii, distances)
+    element_overlaps = jnp.sum(overlaps, axis=4, keepdims=True)
 
     # Calculate volume fractions
-    # volume_fractions = (element_overlaps / element_volumes).reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count)
-
-    densities = density(distances, kernel_radii)
+    volume_fractions = (element_overlaps / element_volumes).reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count)
 
     # Sum fractions to compute pseudo-densities
-    # densities = jnp.sum(volume_fractions, axis=3, keepdims=True)
-    densities = jnp.sum(densities, axis=3, keepdims=True)
-
-    densities = kreisselmeier_steinhauser_max(densities, axis=4)
-
-    densities = densities.squeeze(3)
+    densities = jnp.sum(volume_fractions, axis=3)
 
     # Store the densities in the output array
     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
