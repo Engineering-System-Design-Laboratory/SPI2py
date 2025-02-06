@@ -4,7 +4,7 @@ from SPI2py.models.projection.grid import create_grid
 from SPI2py.models.mechanics.transformations_rigidbody import transform_points
 from SPI2py.models.projection.components import calculate_pseudo_densities
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB, plot_stl_file
-
+from SPI2py.models.projection.grid_kernels import create_uniform_inscription_kernel
 
 # Create grid
 el_size = 0.5
@@ -18,11 +18,14 @@ el_centers = create_grid(0, 2, 0, 6.5, 0,  4.5, element_size=el_size)
 # >=4.0e-2 for up to 181 points
 # >=3.0e-2 for up to 326 points
 # >=2.0e-2 for up to 832 points
-S_k = 10.0e-2
-xyzr_kernel = np.loadtxt('csvs/mdbd_kernel.csv', delimiter=',')
-xyzr_kernel = xyzr_kernel[xyzr_kernel[:, 3] >= S_k]
-kernel_pos = xyzr_kernel[:, :3]
-kernel_rad = xyzr_kernel[:, 3:4]
+# S_k = 10.0e-2
+# xyzr_kernel = np.loadtxt('csvs/mdbd_kernel.csv', delimiter=',')
+# xyzr_kernel = xyzr_kernel[xyzr_kernel[:, 3] >= S_k]
+# kernel_pos = xyzr_kernel[:, :3]
+# kernel_rad = xyzr_kernel[:, 3:4]
+kernel_pos, kernel_rad = create_uniform_inscription_kernel(2)
+kernel_pos = kernel_pos.reshape(-1, 3)
+kernel_rad = kernel_rad.reshape(-1, 1)
 
 # Initialize a primitive kernel
 # kernel_pos = np.array([[0, 0, 0]])

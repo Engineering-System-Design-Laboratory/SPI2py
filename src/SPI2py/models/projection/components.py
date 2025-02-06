@@ -4,6 +4,8 @@ from ..geometry.spheres import get_aabb_indices
 from ..geometry.intersection import volume_intersection_two_spheres
 from ..projection.grid_kernels import apply_kernel
 from ..utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
+from ..mechanics.distance import minimum_distance_segment_segment, signed_distances_capsules_capsules
+
 
 def signed_distance(x, x1, x2, r_b):
 
@@ -104,21 +106,27 @@ def calculate_pseudo_densities(grid_centers, grid_size, obj_points, obj_radii, k
     obj_points_bc = obj_points.reshape(1, 1, 1, 1, obj_count, 3)
     obj_radii_bc = obj_radii.T.reshape(1, 1, 1, 1, obj_count)
     kernel_points_bc = kernel_points.reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count, 1, 3)
+    kernel_radii_bc = kernel_radii.reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count, 1)
 
     # Compute distances between kernel and object points
-    distances = jnp.linalg.norm(kernel_points_bc - obj_points_bc, axis=-1)
+    # distances = jnp.linalg.norm(kernel_points_bc - obj_points_bc, axis=-1)
+    distances = signed_distance(kernel_points_bc, obj_points_bc, obj_points_bc, kernel_radii_bc)
+    # distances = min
 
     # Calculate volume overlaps
-    overlaps = volume_intersection_two_spheres(obj_radii_bc, kernel_radii, distances)
-    element_overlaps = jnp.sum(overlaps, axis=4, keepdims=True)
+    # overlaps = volume_intersection_two_spheres(obj_radii_bc, kernel_radii, distances)
+    # element_overlaps = jnp.sum(overlaps, axis=4, keepdims=True)
 
     # Calculate volume fractions
-    volume_fractions = (element_overlaps / element_volumes).reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count)
+    # volume_fractions = (element_overlaps / element_volumes).reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count)
+
+    densities = density(distances, kernel_radii)
 
     # Sum fractions to compute pseudo-densities
-    densities = jnp.sum(volume_fractions, axis=3, keepdims=True)
+    # densities = jnp.sum(volume_fractions, axis=3, keepdims=True)
+    densities = jnp.sum(densities, axis=3, keepdims=True)
 
-    # densities = kreisselmeier_steinhauser_max(densities, axis=4)
+    densities = kreisselmeier_steinhauser_max(densities, axis=4)
 
     densities = densities.squeeze(3)
 
