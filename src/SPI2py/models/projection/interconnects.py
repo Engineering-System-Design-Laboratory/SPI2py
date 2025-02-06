@@ -91,13 +91,16 @@ def calculate_densities(grid_centers, grid_size,
     # Fix rho for mesh_radii?
     densities = density(distances, kernel_radii)
 
+    # Combine the pseudo densities for all kernel spheres in one grid
+    densities = jnp.sum(densities, axis=3, keepdims=True)
+
     # Sum densities across all cylinders
     # Combine the pseudo densities for all cylinders in each kernel sphere
     # Collapse the last axis to get the combined density for each kernel sphere
     densities = kreisselmeier_steinhauser_max(densities, axis=4)
 
-    # Combine the pseudo densities for all kernel spheres in one grid
-    densities = jnp.sum(densities, axis=3)
+    # # Combine the pseudo densities for all kernel spheres in one grid
+    densities = densities.squeeze(3)
 
     # Store the densities in the output array
     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)

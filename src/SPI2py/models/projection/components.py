@@ -3,6 +3,33 @@ from chex import assert_shape, assert_type
 from ..geometry.spheres import get_aabb_indices
 from ..geometry.intersection import volume_intersection_two_spheres
 from ..projection.grid_kernels import apply_kernel
+from ..utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
+
+def signed_distance(x, x1, x2, r_b):
+
+    # Convert output from JAX.numpy to numpy
+    d_be = jnp.array(minimum_distance_segment_segment(x, x, x1, x2))
+
+    # EQ 8 (order reversed, this is a confirmed typo in the paper)
+    phi_b = r_b - d_be
+
+    return phi_b
+
+
+def regularized_Heaviside(x):
+    H_tilde = 0.5 + 0.75 * x - 0.25 * x ** 3  # EQ 3 in 3D
+    return H_tilde
+
+
+def density(phi_b, r):
+    ratio = phi_b / r  # EQ 2
+    rho = jnp.where(ratio < -1, 0,
+                    jnp.where(ratio > 1, 1,
+                              regularized_Heaviside(ratio)))
+    return rho
+
+
+
 
 
 def calculate_pseudo_densities(grid_centers, grid_size, obj_points, obj_radii, kernel_points, kernel_radii):
@@ -89,7 +116,11 @@ def calculate_pseudo_densities(grid_centers, grid_size, obj_points, obj_radii, k
     volume_fractions = (element_overlaps / element_volumes).reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count)
 
     # Sum fractions to compute pseudo-densities
-    densities = jnp.sum(volume_fractions, axis=3)
+    densities = jnp.sum(volume_fractions, axis=3, keepdims=True)
+
+    # densities = kreisselmeier_steinhauser_max(densities, axis=4)
+
+    densities = densities.squeeze(3)
 
     # Store the densities in the output array
     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
