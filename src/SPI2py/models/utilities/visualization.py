@@ -4,8 +4,9 @@ from ..geometry.cylinders import create_cylinders
 from ..geometry.spheres import get_aabb_bounds
 
 
-def plot_grid(plotter, subplot_index, centers, size, densities=None, min_opacity=0.0125):
+def plot_grid(plotter, subplot_index, centers, size, densities=None, min_opacity=5e-3):
     plotter.subplot(*subplot_index)
+    plotter.render_window.SetMultiSamples(0)
 
     # Plot the bounding box (unchanged)
     flat_centers = centers.reshape(-1, 3)
@@ -38,12 +39,13 @@ def plot_grid(plotter, subplot_index, centers, size, densities=None, min_opacity
 
     # Add the combined glyph mesh.
     # If you don’t need per-cube opacity, you can use a constant opacity here.
-    plotter.add_mesh(glyphs, color='black', opacity=min_opacity)
+    plotter.add_mesh(glyphs, color='black', opacity=min_opacity, lighting=False)
 
 
 def plot_spheres(plotter, subplot_index, positions, radii, color, opacity=0.15):
     # Create the subplot
     plotter.subplot(*subplot_index)
+    plotter.render_window.SetMultiSamples(0)
 
     # Create a sphere template.
     # Use low resolution if acceptable (adjust theta/phi resolution to balance quality and speed)
@@ -72,6 +74,7 @@ def plot_capsules(plotter, subplot_index, cyl_control_points, cyl_radius, color,
 
     # Create the subplot
     plotter.subplot(*subplot_index)
+    plotter.render_window.SetMultiSamples(0)
 
     for cyl_start, cyl_stop, cyl_radius in zip(cyl_starts, cyl_stops, cyl_radii):
 
@@ -94,6 +97,7 @@ def plot_AABB(plotter, subplot_index, centers, radii, color, opacity=0.25):
 
     # Create the subplot
     plotter.subplot(*subplot_index)
+    plotter.render_window.SetMultiSamples(0)
 
     # Get the AABB bounds
     x_min, x_max, y_min, y_max, z_min, z_max = get_aabb_bounds(centers, radii)
@@ -102,10 +106,10 @@ def plot_AABB(plotter, subplot_index, centers, radii, color, opacity=0.25):
     aabb = pv.Box([x_min, x_max, y_min, y_max, z_min, z_max])
 
     # Add the AABB to the plot
-    plotter.add_mesh(aabb, color='black', style='wireframe')
+    plotter.add_mesh(aabb, color='black', style='wireframe', lighting=False)
 
     # Add the AABB to the plot
-    plotter.add_mesh(aabb, color=color, opacity=opacity)
+    plotter.add_mesh(aabb, color=color, opacity=opacity, lighting=False)
 
 
 def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), rotation=(0, 0, 0), scaling=1, opacity=0.8):
@@ -120,6 +124,7 @@ def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), 
     """
     # Create the subplot
     plotter.subplot(*subplot_index)
+    plotter.render_window.SetMultiSamples(0)
 
     # Load the STL file
     mesh = pv.read(stl_file_path)
@@ -146,7 +151,7 @@ def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), 
             mesh.rotate_z(rz, point=center, inplace=True)
 
     # Add the mesh to the plotter
-    plotter.add_mesh(mesh, color='lightgray', opacity=opacity)
+    plotter.add_mesh(mesh, color='lightgray', opacity=opacity, lighting=False)
 
 
 # def plot_problem(prob):

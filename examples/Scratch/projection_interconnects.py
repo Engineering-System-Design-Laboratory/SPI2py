@@ -8,8 +8,8 @@ from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_
 
 
 # Create grid
-el_size = 0.5
-# el_size = 0.25
+# el_size = 0.5
+el_size = 0.25
 n, m, o = 3, 6, 3
 el_centers = create_grid(0,4,0,6,0,2, element_size=el_size)
 
@@ -43,6 +43,7 @@ densities, sample_positions, sample_radii = project_interconnect(el_centers, el_
 
 # Plot
 plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
+plotter.render_window.SetMultiSamples(0)
 
 # Plot the interconnect
 plot_grid(plotter, (0, 0), el_centers, el_size, densities=None)
