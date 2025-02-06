@@ -94,7 +94,7 @@ def calculate_densities(grid_centers, grid_size,
     # Sum densities across all cylinders
     # Combine the pseudo densities for all cylinders in each kernel sphere
     # Collapse the last axis to get the combined density for each kernel sphere
-    densities = jnp.sum(densities, axis=4)
+    densities = kreisselmeier_steinhauser_max(densities, axis=4)
 
     # Combine the pseudo densities for all kernel spheres in one grid
     densities = jnp.sum(densities, axis=3)

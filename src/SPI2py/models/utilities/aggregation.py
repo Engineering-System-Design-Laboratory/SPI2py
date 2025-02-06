@@ -20,7 +20,7 @@ def kreisselmeier_steinhauser_max(constraints, rho=100, axis=None):
     shifted_constraints = constraints - max_constraint
 
     # Compute the KS aggregation
-    ks_aggregated_max = max_constraint + jnp.log(jnp.sum(jnp.exp(rho * shifted_constraints), axis=axis)) / rho
+    ks_aggregated_max = max_constraint + jnp.log(jnp.sum(jnp.exp(rho * shifted_constraints), axis=axis, keepdims=True)) / rho
 
     # Remove singleton dimensions if axis was specified
     if axis is not None:
@@ -29,25 +29,33 @@ def kreisselmeier_steinhauser_max(constraints, rho=100, axis=None):
     return ks_aggregated_max
 
 
-def apply_rho_min(densities, rho_min=1e-3, rho=100):
+def kreisselmeier_steinhauser_min(constraints, rho=100, axis=None):
     """
-    Combines densities using the KS max function and applies a minimum density
-    for numerical stability.
+    Computes the Kreisselmeier-Steinhauser (KS) aggregation for the minimum constraint value,
+    accounting for operator overflow, using JAX.
 
     Parameters:
-    - densities: A JAX array of pseudo-densities (shape: (..., n_densities)).
-    - rho_min: Minimum allowable density.
-    - rho: Parameter controlling the sharpness of the KS aggregation.
+    - constraints: A JAX array containing constraint values.
+    - rho: A positive scalar that controls the sharpness of the approximation.
+    - axis: The axis along which to apply the KS aggregation.
 
     Returns:
-    - Combined densities with minimum density applied.
+    - The smooth maximum of the constraint values along the specified axis.
     """
-    # Apply KS max across the last axis
-    combined_density = kreisselmeier_steinhauser_max(densities, rho=rho, axis=-1)
 
-    # Apply rho_min where the original densities were all zero
-    all_zero_mask = jnp.all(densities == 0, axis=-1)
-    combined_density = jnp.where(all_zero_mask, rho_min, combined_density)
+    # Negate the constraints to calculate the minimum
+    neg_constraints = -constraints
 
-    return combined_density
+    # Avoid overflow by subtracting the maximum of the negated constraints
+    max_neg_constraint = jnp.max(neg_constraints, axis=axis, keepdims=True)
+    shifted_neg_constraints = neg_constraints - max_neg_constraint
+
+    # Compute the KS aggregation
+    ks_aggregated_neg = max_neg_constraint + jnp.log(jnp.sum(jnp.exp(rho * shifted_neg_constraints), axis=axis, keepdims=True)) / rho
+
+    # Negate the result to get the smooth minimum
+    ks_aggregated_min = -ks_aggregated_neg
+
+    return ks_aggregated_min
+
 
