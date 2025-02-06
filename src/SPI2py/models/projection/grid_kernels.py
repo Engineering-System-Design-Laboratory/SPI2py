@@ -1,25 +1,70 @@
 import numpy as np
 
 
-def create_uniform_inscription_kernel(steps_per_edge):
-    # Step size (distance between the centers of two consecutive spheres)
+# def create_uniform_inscription_kernel(steps_per_edge):
+#     # Step size (distance between the centers of two consecutive spheres)
+#     step_size = 1.0 / steps_per_edge
+#
+#     # Initialize arrays for sphere positions and radii
+#     positions = np.zeros((steps_per_edge, steps_per_edge, steps_per_edge, 3))  # 3 for (x, y, z) coordinates
+#     radii = np.zeros((steps_per_edge, steps_per_edge, steps_per_edge))  # Radii of spheres
+#
+#     # Radius of each inscribed sphere is half of the small cube's edge length
+#     sphere_radius = 0.5 * step_size
+#
+#     # Loop through the grid and compute the sphere positions and radii
+#     for i in range(steps_per_edge):
+#         for j in range(steps_per_edge):
+#             for k in range(steps_per_edge):
+#                 # The center of each inscribed sphere is at the center of each small cube
+#                 x = (i + 0.5) * step_size
+#                 y = (j + 0.5) * step_size
+#                 z = (k + 0.5) * step_size
+#
+#                 positions[i, j, k] = [x, y, z]
+#                 radii[i, j, k] = sphere_radius
+#
+#     return positions, radii
+
+
+
+def create_uniform_kernel(steps_per_edge, mode='inscription'):
+    """
+    Create a uniform grid of spheres based on the given mode.
+
+    Parameters:
+    - steps_per_edge (int): Number of steps per edge of the grid.
+    - mode (str): Either 'inscription' for inscribed spheres or 'circumscription' for circumscribed spheres.
+
+    Returns:
+    - positions (numpy array): Array of sphere positions.
+    - radii (numpy array): Array of sphere radii.
+    """
+    # Step size (distance between centers of consecutive spheres in the grid)
     step_size = 1.0 / steps_per_edge
 
     # Initialize arrays for sphere positions and radii
     positions = np.zeros((steps_per_edge, steps_per_edge, steps_per_edge, 3))  # 3 for (x, y, z) coordinates
     radii = np.zeros((steps_per_edge, steps_per_edge, steps_per_edge))  # Radii of spheres
 
-    # Radius of each inscribed sphere is half of the small cube's edge length
-    sphere_radius = 0.5 * step_size
+    # Determine radius and center offset based on the mode
+    if mode == 'inscription':
+        sphere_radius = 0.5 * step_size  # Inscribed sphere radius (half the cube edge length)
+        center_offset = 0.5 * step_size  # Center is inside the cube
+    elif mode == 'circumscription':
+        sphere_radius = (3 ** 0.5) * 0.5 * step_size  # Circumscribed sphere radius (half the cube diagonal)
+        center_offset = 0.0  # Center aligned with the grid corner for circumscriptions
+    else:
+        raise ValueError("Invalid mode. Use 'inscription' or 'circumscription'.")
 
     # Loop through the grid and compute the sphere positions and radii
     for i in range(steps_per_edge):
         for j in range(steps_per_edge):
             for k in range(steps_per_edge):
-                # The center of each inscribed sphere is at the center of each small cube
-                x = (i + 0.5) * step_size
-                y = (j + 0.5) * step_size
-                z = (k + 0.5) * step_size
+                # The center of each sphere
+                x = (i + center_offset) * step_size
+                y = (j + center_offset) * step_size
+                z = (k + center_offset) * step_size
 
                 positions[i, j, k] = [x, y, z]
                 radii[i, j, k] = sphere_radius

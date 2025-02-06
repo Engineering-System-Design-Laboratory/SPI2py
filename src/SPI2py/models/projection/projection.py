@@ -86,9 +86,9 @@ def project_interconnect(grid_centers, grid_size,
     cylinder_stops: (n_segments, 3) tensor
     cylinder_radii: (n_segments, 1) tensor
 
-    cylinder_starts_expanded: (1, 1, 1, n_segments, 3) tensor
-    cylinder_stops_expanded: (1, 1, 1, n_segments, 3) tensor
-    cylinder_radii_expanded: (1, 1, 1, n_segments, 1) tensor
+    cylinder_starts_expanded: (1, 1, 1, 1, n_segments, 3) tensor
+    cylinder_stops_expanded: (1, 1, 1, 1, n_segments, 3) tensor
+    cylinder_radii_expanded: (1, 1, 1, 1, n_segments) tensor
 
     pseudo_densities: (n_el_x, n_el_y, n_el_z) tensor
     """
@@ -121,9 +121,6 @@ def project_interconnect(grid_centers, grid_size,
     # Expand the arrays to allow broadcasting
     # Transpose object radii for broadcasting
     kernel_points_bc = kernel_points.reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count, 1, 3)
-    # cyl_starts_bc = cyl_starts.reshape(1, 1, 1, cyl_count, 3)
-    # cyl_stops_bc = cyl_stops.reshape(1, 1, 1, cyl_count, 3)
-    # cyl_rad_bc = cyl_rad.T.reshape(1, 1, 1, cyl_count, 1)
     cyl_starts_bc = cyl_starts.reshape(1, 1, 1, 1, cyl_count, 3)
     cyl_stops_bc = cyl_stops.reshape(1, 1, 1, 1, cyl_count, 3)
     cyl_rad_bc = cyl_rad.T.reshape(1, 1, 1, 1, cyl_count)
@@ -142,7 +139,7 @@ def project_interconnect(grid_centers, grid_size,
     # Collapse the last axis to get the combined density for each kernel sphere
     densities = kreisselmeier_steinhauser_max(densities, axis=4)
 
-    # # Combine the pseudo densities for all kernel spheres in one grid
+    # Combine the pseudo densities for all kernel spheres in one grid
     densities = densities.squeeze(3)
 
     # Store the densities in the output array
@@ -153,9 +150,6 @@ def project_interconnect(grid_centers, grid_size,
 
     # Apply a minimum density
     all_densities = apply_minimum_density(all_densities)
-
-    # Combine the pseudo densities for all kernel spheres in one grid
-
 
     return all_densities, kernel_points, kernel_radii
 
