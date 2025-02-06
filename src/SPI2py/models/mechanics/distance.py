@@ -150,9 +150,9 @@ def minimum_distances_points_segments(point: jnp.ndarray,
                                       stop: jnp.ndarray) -> jnp.ndarray:
 
     # Validate the inputs
-    assert_shape(point, (None, 3))
-    assert_shape(start, (None, 3))
-    assert_shape(stop, (None, 3))
+    assert_shape(point, (..., 3))
+    assert_shape(start, (..., 3))
+    assert_shape(stop, (..., 3))
     assert_type(point, 'float64')
     assert_type(start, 'float64')
     assert_type(stop, 'float64')

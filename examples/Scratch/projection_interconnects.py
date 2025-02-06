@@ -24,10 +24,10 @@ kernel_rad = xyzr_kernel[:, 3:4]
 
 # Create line segment arrays
 # cyl_control_points = np.array([[0.25, 0.25, 2], [2, 4, 1]])
-cyl_control_points = np.array([[0.25, 0.25, 2], [2, 2, 2]])
-cyl_radius = np.array([0.25])
-# cyl_control_points = np.array([[0.25, 0.25, 2], [2, 2, 1], [2, 4, 1]])
+# cyl_control_points = np.array([[0.25, 0.25, 2], [2, 2, 2]])
 # cyl_radius = np.array([0.25])
+cyl_control_points = np.array([[0.25, 0.25, 2], [2, 2, 1], [2, 4, 1]])
+cyl_radius = np.array([0.25])
 # cyl_control_points = np.array([[0, 0, 0], [2, 0, 0], [2, 4, 0]])
 # cyl_radius = np.array([0.25])
 

@@ -8,23 +8,12 @@ from chex import assert_shape, assert_type
 from .grid_kernels import apply_kernel
 from ..geometry.cylinders import create_cylinders
 from ..geometry.intersection import volume_intersection_two_spheres
-from ..mechanics.distance import minimum_distances_points_segments
+from ..mechanics.distance import minimum_distances_points_segments, minimum_distances_segments_segments
 from ..projection.grid_kernels import apply_kernel
 from ..geometry.spheres import get_aabb_indices
 from ..utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
 
 # ---- Utility Functions ---- #
-
-
-def phi(x, x1, x2, r_b):
-
-    # Convert output from JAX.numpy to numpy
-    d_be = jnp.array(min_dist_segment_segment(x, x, x1, x2))
-
-    # EQ 8 (order reversed, this is a confirmed typo in the paper)
-    phi_b = r_b - d_be
-
-    return phi_b
 
 
 def regularized_Heaviside(x):
@@ -125,16 +114,22 @@ def project_interconnect(grid_centers, grid_size,
     # Apply the kernel to active grid elements
     kernel_points, kernel_radii = apply_kernel(active_grid_centers, grid_size, kernel_points, kernel_radii)
 
+    # # Calculate sample volumes and element volumes
+    # sample_volumes = (4 / 3) * jnp.pi * kernel_radii ** 3
+    # element_volumes = jnp.sum(sample_volumes, axis=3, keepdims=True)
+
     # Expand the arrays to allow broadcasting
     # Transpose object radii for broadcasting
     kernel_points_bc = kernel_points.reshape(aabb_nx, aabb_ny, aabb_nz, kernel_count, 1, 3)
-    cyl_starts_bc = cyl_starts.reshape(1, 1, 1, cyl_count, 3)
-    cyl_stops_bc = cyl_stops.reshape(1, 1, 1, cyl_count, 3)
-    cyl_rad_bc = cyl_rad.T.reshape(1, 1, 1, cyl_count, 1)
+    # cyl_starts_bc = cyl_starts.reshape(1, 1, 1, cyl_count, 3)
+    # cyl_stops_bc = cyl_stops.reshape(1, 1, 1, cyl_count, 3)
+    # cyl_rad_bc = cyl_rad.T.reshape(1, 1, 1, cyl_count, 1)
+    cyl_starts_bc = cyl_starts.reshape(1, 1, 1, 1, cyl_count, 3)
+    cyl_stops_bc = cyl_stops.reshape(1, 1, 1, 1, cyl_count, 3)
+    cyl_rad_bc = cyl_rad.T.reshape(1, 1, 1, 1, cyl_count)
 
     # Vectorized signed distance and density calculations using your distance function
-    # distances = phi(kernel_points_bc, cyl_starts_bc, cyl_stops_bc, cyl_rad_bc)
-    distances = cyl_rad_bc - min_dist_segment_segment(kernel_points_bc, kernel_points_bc, cyl_starts_bc, cyl_stops_bc)
+    distances = cyl_rad_bc - minimum_distances_points_segments(kernel_points_bc, cyl_starts_bc, cyl_stops_bc)
 
     # Fix rho for mesh_radii?
     densities = density(distances, kernel_radii)
@@ -239,7 +234,7 @@ def project_component(grid_centers, grid_size, obj_points, obj_radii, kernel_poi
     obj_radii_bc = obj_radii.T.reshape(1, 1, 1, 1, obj_count)
 
     # Compute distances between kernel and object points
-    distances = min_dist_segment_segment(kernel_points_bc, kernel_points_bc, obj_points_bc, obj_points_bc)
+    distances = minimum_distances_points_segments(kernel_points_bc, obj_points_bc, obj_points_bc)
 
     # Calculate volume overlaps
     overlaps = volume_intersection_two_spheres(obj_radii_bc, kernel_radii, distances)
