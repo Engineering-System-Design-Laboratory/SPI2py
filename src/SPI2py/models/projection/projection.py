@@ -8,7 +8,7 @@ from chex import assert_shape, assert_type
 from .grid_kernels import apply_kernel
 from ..geometry.cylinders import create_cylinders
 from ..geometry.intersection import volume_intersection_two_spheres
-from ..mechanics.distance import min_dist_segment_segment, signed_distances_capsule_capsule
+from ..mechanics.distance import minimum_distances_points_segments
 from ..projection.grid_kernels import apply_kernel
 from ..geometry.spheres import get_aabb_indices
 from ..utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min

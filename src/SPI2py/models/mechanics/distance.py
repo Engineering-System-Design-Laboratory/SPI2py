@@ -27,18 +27,29 @@ def distances_points_points(a: jnp.ndarray,
     return c
 
 
-def sum_radii(a: jnp.ndarray,
-              b: jnp.ndarray) -> jnp.ndarray:
+def distances_radii_radii(radii_1: jnp.ndarray,
+                          radii_2: jnp.ndarray) -> jnp.ndarray:
+
+    """
+    Calculate the distances obtained by adding radii from two sets of spheres.
+
+    Parameters:
+    - radii_1: The radii of the first set of spheres.
+    - radii_2: The radii of the second set of spheres.
+
+    Returns:
+    - The distances between the two sets of radii.
+    """
 
     # Validate the inputs
-    assert_shape(a, (None, 1))
-    assert_shape(b, (None, 1))
-    assert_type(a, 'float64')
-    assert_type(b, 'float64')
+    assert_shape(radii_1, (None, 1))
+    assert_shape(radii_2, (None, 1))
+    assert_type(radii_1, 'float64')
+    assert_type(radii_2, 'float64')
 
     # Reshape the arrays for broadcasting
-    aa = a.reshape(-1, 1)
-    bb = b.reshape(1, -1)
+    aa = radii_1.reshape(-1, 1)
+    bb = radii_2.reshape(1, -1)
 
     # Calculate the sum of the radii
     c = aa + bb
@@ -46,48 +57,10 @@ def sum_radii(a: jnp.ndarray,
     return c
 
 
-def signed_distances_spheres_spheres(centers_a: jnp.ndarray,
-                                     radii_a:   jnp.ndarray,
-                                     centers_b: jnp.ndarray,
-                                     radii_b:   jnp.ndarray) -> jnp.ndarray:
-
-    """
-    Calculate the signed distances between two sets of spheres.
-
-    Note: The signed distance is positive if the spheres are separated, and negative if they are intersecting.
-
-    Parameters:
-    - centers_a: The centers of the first set of spheres.
-    - radii_a: The radii of the first set of spheres.
-    - centers_b: The centers of the second set of spheres.
-    - radii_b: The radii of the second set of spheres.
-
-    Returns:
-    - The signed distances between the two sets of spheres
-    """
-
-    # Validate the inputs
-    assert_shape(centers_a, (None, 3))
-    assert_shape(radii_a, (None, 1))
-    assert_shape(centers_b, (None, 3))
-    assert_shape(radii_b, (None, 1))
-    assert_type(centers_a, 'float64')
-    assert_type(radii_a, 'float64')
-    assert_type(centers_b, 'float64')
-    assert_type(radii_b, 'float64')
-
-    # Calculate the signed distances
-    delta_positions = distances_points_points(centers_a, centers_b)
-    delta_radii     = sum_radii(radii_a, radii_b)
-    signed_distances = delta_radii - delta_positions
-
-    return signed_distances
-
-
-def min_dist_segment_segment(start_1: jnp.ndarray,
-                             stop_1: jnp.ndarray,
-                             start_2: jnp.ndarray,
-                             stop_2: jnp.ndarray) -> jnp.ndarray:
+def minimum_distances_segments_segments(start_1: jnp.ndarray,
+                                        stop_1: jnp.ndarray,
+                                        start_2: jnp.ndarray,
+                                        stop_2: jnp.ndarray) -> jnp.ndarray:
     """
     Returns the minimum distances between line segments.
 
@@ -172,9 +145,9 @@ def min_dist_segment_segment(start_1: jnp.ndarray,
     return minimum_distance
 
 
-def min_dist_point_segment(point: jnp.ndarray,
-                           start: jnp.ndarray,
-                           stop: jnp.ndarray) -> jnp.ndarray:
+def minimum_distances_points_segments(point: jnp.ndarray,
+                                      start: jnp.ndarray,
+                                      stop: jnp.ndarray) -> jnp.ndarray:
 
     # Validate the inputs
     assert_shape(point, (None, 3))
@@ -184,15 +157,53 @@ def min_dist_point_segment(point: jnp.ndarray,
     assert_type(start, 'float64')
     assert_type(stop, 'float64')
 
-    min_dist = min_dist_segment_segment(point, point, start, stop)
+    min_dist = minimum_distances_segments_segments(point, point, start, stop)
 
     return min_dist
 
 
-def signed_distances_capsule_capsule(centers_1: jnp.ndarray,
-                                     radii_1:   jnp.ndarray,
-                                     centers_2: jnp.ndarray,
-                                     radii_2:   jnp.ndarray) -> jnp.ndarray:
+def signed_distances_spheres_spheres(centers_a: jnp.ndarray,
+                                     radii_a:   jnp.ndarray,
+                                     centers_b: jnp.ndarray,
+                                     radii_b:   jnp.ndarray) -> jnp.ndarray:
+
+    """
+    Calculate the signed distances between two sets of spheres.
+
+    Note: The signed distance is positive if the spheres are separated, and negative if they are intersecting.
+
+    Parameters:
+    - centers_a: The centers of the first set of spheres.
+    - radii_a: The radii of the first set of spheres.
+    - centers_b: The centers of the second set of spheres.
+    - radii_b: The radii of the second set of spheres.
+
+    Returns:
+    - The signed distances between the two sets of spheres
+    """
+
+    # Validate the inputs
+    assert_shape(centers_a, (None, 3))
+    assert_shape(radii_a, (None, 1))
+    assert_shape(centers_b, (None, 3))
+    assert_shape(radii_b, (None, 1))
+    assert_type(centers_a, 'float64')
+    assert_type(radii_a, 'float64')
+    assert_type(centers_b, 'float64')
+    assert_type(radii_b, 'float64')
+
+    # Calculate the signed distances
+    delta_positions = distances_points_points(centers_a, centers_b)
+    delta_radii     = distances_radii_radii(radii_a, radii_b)
+    signed_distances = delta_radii - delta_positions
+
+    return signed_distances
+
+
+def signed_distances_capsules_capsules(centers_1: jnp.ndarray,
+                                       radii_1:   jnp.ndarray,
+                                       centers_2: jnp.ndarray,
+                                       radii_2:   jnp.ndarray) -> jnp.ndarray:
 
     # Validate the inputs
     assert_shape(centers_1, (None, 3))
@@ -204,8 +215,8 @@ def signed_distances_capsule_capsule(centers_1: jnp.ndarray,
     assert_type(centers_2, 'float64')
     assert_type(radii_2, 'float64')
 
-    delta_positions = min_dist_segment_segment(centers_1, centers_2)
-    delta_radii     = sum_radii(radii_1, radii_2)
+    delta_positions = minimum_distances_segments_segments(centers_1, centers_2)
+    delta_radii     = distances_radii_radii(radii_1, radii_2)
 
     signed_distances = delta_radii - delta_positions
 
