@@ -11,7 +11,6 @@ el_size = 0.5
 n, m, o = 3, 6, 3
 el_centers = create_grid(0,4,0,6,0,2, element_size=el_size)
 
-# TODO: Appears to work for single kernel, but not for multiple kernels
 # Read the mesh kernel
 # Slice by minimum radius instead of length to maintain kernel symmetry
 # S_k = 9.0e-2  # >=9.0e-2 for up to 33 points
