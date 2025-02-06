@@ -2,7 +2,7 @@ import numpy as np
 import pyvista as pv
 from SPI2py.models.projection.grid import create_grid
 from SPI2py.models.mechanics.transformations_rigidbody import transform_points
-from SPI2py.models.projection.components import calculate_pseudo_densities
+from SPI2py.models.projection.projection import project_component
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB, plot_stl_file
 from SPI2py.models.projection.grid_kernels import create_uniform_inscription_kernel
 
@@ -19,13 +19,14 @@ el_centers = create_grid(0, 2, 0, 6.5, 0,  4.5, element_size=el_size)
 # >=3.0e-2 for up to 326 points
 # >=2.0e-2 for up to 832 points
 # S_k = 10.0e-2
-# xyzr_kernel = np.loadtxt('csvs/mdbd_kernel.csv', delimiter=',')
-# xyzr_kernel = xyzr_kernel[xyzr_kernel[:, 3] >= S_k]
-# kernel_pos = xyzr_kernel[:, :3]
-# kernel_rad = xyzr_kernel[:, 3:4]
-kernel_pos, kernel_rad = create_uniform_inscription_kernel(2)
-kernel_pos = kernel_pos.reshape(-1, 3)
-kernel_rad = kernel_rad.reshape(-1, 1)
+S_k = 9.0e-2
+xyzr_kernel = np.loadtxt('csvs/mdbd_kernel.csv', delimiter=',')
+xyzr_kernel = xyzr_kernel[xyzr_kernel[:, 3] >= S_k]
+kernel_pos = xyzr_kernel[:, :3]
+kernel_rad = xyzr_kernel[:, 3:4]
+# kernel_pos, kernel_rad = create_uniform_inscription_kernel(3)
+# kernel_pos = kernel_pos.reshape(-1, 3)
+# kernel_rad = kernel_rad.reshape(-1, 1)
 
 # Initialize a primitive kernel
 # kernel_pos = np.array([[0, 0, 0]])
@@ -66,9 +67,9 @@ pos_chp_center = np.mean(pos_chp, axis=0, keepdims=True)
 pos_chp = transform_points(pos_chp, pos_chp_center, translation=(0, 0.5, 1.75), rotation=(0, 0, 0))
 
 # Calculate the pseudo-densities
-densities_be, sample_positions_be, sample_radii_be = calculate_pseudo_densities(el_centers, el_size, pos_be, rad_be, kernel_pos, kernel_rad)
-densities_cdg, sample_positions_cdg, sample_radii_cdg = calculate_pseudo_densities(el_centers, el_size, pos_cdg, rad_cdg, kernel_pos, kernel_rad)
-densities_chp, sample_positions_chp, sample_radii_chp = calculate_pseudo_densities(el_centers, el_size, pos_chp, rad_chp, kernel_pos, kernel_rad)
+densities_be, sample_positions_be, sample_radii_be = project_component(el_centers, el_size, pos_be, rad_be, kernel_pos, kernel_rad)
+densities_cdg, sample_positions_cdg, sample_radii_cdg = project_component(el_centers, el_size, pos_cdg, rad_cdg, kernel_pos, kernel_rad)
+densities_chp, sample_positions_chp, sample_radii_chp = project_component(el_centers, el_size, pos_chp, rad_chp, kernel_pos, kernel_rad)
 # densities_combined = densities_be + densities_cdg + densities_chp
 densities_combined = np.minimum(densities_be + densities_cdg + densities_chp, 1.0)  # TODO Implement w/ aggregation
 

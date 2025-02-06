@@ -2,7 +2,7 @@ import numpy as np
 import pyvista as pv
 
 from SPI2py.models.projection.grid import create_grid
-from SPI2py.models.projection.interconnects import calculate_densities
+from SPI2py.models.projection.projection import project_interconnect
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_capsules, plot_AABB
 
 
@@ -34,7 +34,7 @@ cyl_radius = np.array([0.25])
 
 
 # Calculate the densities
-densities, sample_positions, sample_radii = calculate_densities(el_centers, el_size, cyl_control_points, cyl_radius, kernel_pos, kernel_rad)
+densities, sample_positions, sample_radii = project_interconnect(el_centers, el_size, cyl_control_points, cyl_radius, kernel_pos, kernel_rad)
 
 # Plot
 plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
