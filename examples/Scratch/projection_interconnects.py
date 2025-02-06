@@ -41,28 +41,28 @@ cyl_radius = np.array([0.25])
 # Calculate the densities
 densities, sample_positions, sample_radii = project_interconnect(el_centers, el_size, cyl_control_points, cyl_radius, kernel_pos, kernel_rad)
 
-# # Plot
-# plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
-#
-# # Plot the interconnect
-# plot_grid(plotter, (0, 0), el_centers, el_size, densities=None)
-# plot_capsules(plotter, (0, 0), cyl_control_points, cyl_radius, 'blue')
-# plot_AABB(plotter, (0, 0), cyl_control_points, cyl_radius, color='blue')
-#
-# # Plot the kernel
-# plot_grid(plotter, (1, 0), el_centers, el_size, densities=None)
-# plot_spheres(plotter, (1, 0), sample_positions, sample_radii, 'lightgray')
-#
-# # Plot the pseudo-densities
-# plot_grid(plotter, (1, 1), el_centers, el_size, densities=densities)
-#
-# # # Plot the grid with the kernel
-# # plot_grid(plotter, (0, 1), el_centers, el_size, densities=None)
-# # plot_spheres(plotter, (0, 1), sample_positions, sample_radii, 'lightgray')
-# # plot_capsules(plotter, (0, 1), cyl_control_points, cyl_radius, 'blue')
-#
-# plotter.show_bounds(all_edges=True, location='outer')
-# plotter.show_axes()
-# plotter.link_views()
-# plotter.show()
+# Plot
+plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
+
+# Plot the interconnect
+plot_grid(plotter, (0, 0), el_centers, el_size, densities=None)
+plot_capsules(plotter, (0, 0), cyl_control_points, cyl_radius, 'blue')
+plot_AABB(plotter, (0, 0), cyl_control_points, cyl_radius, color='blue')
+
+# Plot the kernel
+plot_grid(plotter, (1, 0), el_centers, el_size, densities=None)
+plot_spheres(plotter, (1, 0), sample_positions, sample_radii, 'lightgray')
+
+# Plot the pseudo-densities
+plot_grid(plotter, (1, 1), el_centers, el_size, densities=densities)
+
+# # Plot the grid with the kernel
+# plot_grid(plotter, (0, 1), el_centers, el_size, densities=None)
+# plot_spheres(plotter, (0, 1), sample_positions, sample_radii, 'lightgray')
+# plot_capsules(plotter, (0, 1), cyl_control_points, cyl_radius, 'blue')
+
+plotter.show_bounds(all_edges=True, location='outer')
+plotter.show_axes()
+plotter.link_views()
+plotter.show()
 

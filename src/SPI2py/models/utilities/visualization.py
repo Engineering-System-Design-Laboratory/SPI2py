@@ -1,56 +1,69 @@
 import numpy as np
 import pyvista as pv
 from ..geometry.cylinders import create_cylinders
-from ..geometry.spheres import get_aabb_indices, get_aabb_bounds
-
+from ..geometry.spheres import get_aabb_bounds
 
 
 def plot_grid(plotter, subplot_index, centers, size, densities=None, min_opacity=0.0125):
-
     plotter.subplot(*subplot_index)
 
-    # Plot the bounding box
-    # Get the AABB bounds
-    x_min, y_min, z_min = np.min(centers.reshape(-1, 3) - size/2, axis=0)
-    x_max, y_max, z_max = np.max(centers.reshape(-1, 3) + size/2, axis=0)
+    # Plot the bounding box (unchanged)
+    flat_centers = centers.reshape(-1, 3)
+    x_min, y_min, z_min = np.min(flat_centers - size/2, axis=0)
+    x_max, y_max, z_max = np.max(flat_centers + size/2, axis=0)
     aabb = pv.Box(bounds=(x_min, x_max, y_min, y_max, z_min, z_max))
     plotter.add_mesh(aabb, color='black', style='wireframe')
 
-    #
-    m, n, o = centers.shape[:3]
+    # Create a PolyData point cloud from the centers
+    points = pv.PolyData(flat_centers)
 
-    for mi in range(m):
-        for ni in range(n):
-            for oi in range(o):
-                pos = centers[mi, ni, oi, 0]
-                box = pv.Cube(center=pos, x_length=size, y_length=size, z_length=size)
+    # Create a cube template: a unit cube centered at (0,0,0)
+    cube_template = pv.Cube(center=(0, 0, 0), x_length=1, y_length=1, z_length=1)
+    # Scale the cube so that its edge lengths equal the desired size.
+    cube_template.points *= size
 
-                if densities is not None:
-                    opacity = max(min_opacity, min(densities[mi, ni, oi], 1.0))
-                else:
-                    opacity = min_opacity
+    # If densities are provided, assign them as a scalar array.
+    # Note: glyphs don’t directly support per-glyph opacity.
+    # You might later map these scalars to colors (with alpha) using a lookup table,
+    # or group the points by similar opacity values if needed.
+    if densities is not None:
+        flat_densities = densities.flatten()
+        # Clamp densities to the range [min_opacity, 1.0]
+        opacities = np.maximum(min_opacity, np.minimum(flat_densities, 1.0))
+        points["opacity"] = opacities
 
-                plotter.add_mesh(box, color='black', opacity=opacity)
+    # Use the glyph filter to replicate the cube at each point.
+    # Since each cube is already scaled to 'size', we disable further scaling.
+    glyphs = points.glyph(orient=False, scale=False, geom=cube_template)
+
+    # Add the combined glyph mesh.
+    # If you don’t need per-cube opacity, you can use a constant opacity here.
+    plotter.add_mesh(glyphs, color='black', opacity=min_opacity)
 
 
 def plot_spheres(plotter, subplot_index, positions, radii, color, opacity=0.15):
-
     # Create the subplot
     plotter.subplot(*subplot_index)
 
-    # Initialize the multi-block
-    block = pv.MultiBlock()
+    # Create a sphere template.
+    # Use low resolution if acceptable (adjust theta/phi resolution to balance quality and speed)
+    sphere_template = pv.Sphere(theta_resolution=8, phi_resolution=8)
 
-    # Flatten the positions and radii
+    # Flatten positions and radii
     flat_positions = positions.reshape(-1, 3)
     flat_radii = radii.flatten()
 
-    # Create a sphere for each position and radius
-    for flat_position, flat_radius in zip(flat_positions, flat_radii):
-        sphere = pv.Sphere(center=flat_position, radius=flat_radius)
-        block.append(sphere)
+    # Create a point cloud from positions.
+    points = pv.PolyData(flat_positions)
+    # Add radii as a scalar field that the glyph filter will use for scaling.
+    points["scale"] = flat_radii
 
-    plotter.add_mesh(block, color=color, opacity=opacity)
+    # Generate glyphs:
+    # The 'scale' argument here tells the glyph filter to use the "scale" array for scaling.
+    glyphs = points.glyph(orient=False, scale="scale", geom=sphere_template)
+
+    # Add the combined glyph mesh to the plotter
+    plotter.add_mesh(glyphs, color=color, opacity=opacity)
 
 
 def plot_capsules(plotter, subplot_index, cyl_control_points, cyl_radius, color, opacity=0.875):
