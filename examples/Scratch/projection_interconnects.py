@@ -23,7 +23,7 @@ el_centers = create_grid(0,4,0,6,0,2, element_size=el_size)
 # # xyzr_kernel = xyzr_kernel[xyzr_kernel[:, 3] >= S_k]
 # kernel_pos = xyzr_kernel[:, :3]
 # kernel_rad = xyzr_kernel[:, 3:4]
-kernel_pos, kernel_rad = create_uniform_kernel(3, mode='circumscription')
+kernel_pos, kernel_rad = create_uniform_kernel(1, mode='circumscription')
 # kernel_pos, kernel_rad = create_uniform_kernel(3, mode='inscription')
 kernel_pos = kernel_pos.reshape(-1, 3)
 kernel_rad = kernel_rad.reshape(-1, 1)
@@ -43,7 +43,7 @@ densities, sample_positions, sample_radii = project_interconnect(el_centers, el_
 
 # Plot
 plotter = pv.Plotter(shape=(2, 2), window_size=(1500, 500))
-plotter.render_window.SetMultiSamples(0)
+# plotter.render_window.SetMultiSamples(0)
 
 # Plot the interconnect
 plot_grid(plotter, (0, 0), el_centers, el_size, densities=None)

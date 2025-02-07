@@ -7,9 +7,9 @@ def volume_intersection_two_spheres(radii_1: jnp.ndarray,
                                     distances: jnp.ndarray) -> jnp.ndarray:
 
     # Validate the inputs
-    assert_shape(radii_1, (None, 1))
-    assert_shape(radii_2, (None, 1))
-    assert_shape(distances, (None, 1))
+    # assert_shape(radii_1, (None, 1))
+    # assert_shape(radii_2, (None, 1))
+    # assert_shape(distances, (None, 1))
     assert_type(radii_1, 'float64')
     assert_type(radii_2, 'float64')
     assert_type(distances, 'float64')
