@@ -158,6 +158,7 @@ def elasticity_matrix(E, nu):
 #
 #     return K_local
 
+
 def thermal_local_stiffness_matrix(nodes, thermal_conductivity):
     K_local = np.zeros((8, 8))  # 8 nodes with 1 temperature DOF per node
 

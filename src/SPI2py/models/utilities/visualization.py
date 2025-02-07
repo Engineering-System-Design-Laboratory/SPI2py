@@ -150,6 +150,8 @@ def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), 
     plotter.add_mesh(mesh, color='lightgray', opacity=opacity, lighting=False)
 
 
+
+
 # def plot_problem(prob):
 #     """
 #     Plot the model at a given state.
