@@ -2,7 +2,7 @@ import numpy as np
 import pyvista as pv
 from SPI2py.models.projection.grid import create_grid
 from SPI2py.models.mechanics.transformations_rigidbody import transform_points
-from SPI2py.models.projection.projection import project_component
+from SPI2py.models.projection.projection import project_component, combine_densities
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB, plot_stl_file
 from SPI2py.models.projection.grid_kernels import create_uniform_kernel
 
@@ -71,7 +71,8 @@ densities_be, sample_positions_be, sample_radii_be = project_component(el_center
 densities_cdg, sample_positions_cdg, sample_radii_cdg = project_component(el_centers, el_size, pos_cdg, rad_cdg, kernel_pos, kernel_rad)
 densities_chp, sample_positions_chp, sample_radii_chp = project_component(el_centers, el_size, pos_chp, rad_chp, kernel_pos, kernel_rad)
 # densities_combined = densities_be + densities_cdg + densities_chp
-densities_combined = np.minimum(densities_be + densities_cdg + densities_chp, 1.0)  # TODO Implement w/ aggregation
+# densities_combined = np.minimum(densities_be + densities_cdg + densities_chp, 1.0)  # TODO Implement w/ aggregation
+densities_combined = combine_densities(densities_be, densities_cdg, densities_chp)
 
 
 # Plot

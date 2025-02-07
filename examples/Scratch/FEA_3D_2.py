@@ -1,8 +1,8 @@
 import numpy as np
 import pyvista as pv
 import jax.numpy as jnp
-from SPI2py.models.physics.FEA.mesh import generate_mesh
-from SPI2py.models.physics.FEA.solver import fea_3d_thermal
+from SPI2py.models.physics.distributed.mesh import generate_mesh
+from SPI2py.models.physics.distributed.solver import fea_3d_thermal
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
 

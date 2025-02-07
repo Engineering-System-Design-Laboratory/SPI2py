@@ -98,12 +98,6 @@ def project_interconnect(grid_centers, grid_size,
     # Store the densities in the output array
     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
 
-    # Apply Solid Isotropic Material Penalization (SIMP) to the densities
-    all_densities = penalize_densities(all_densities)
-
-    # Apply a minimum density
-    all_densities = apply_minimum_density(all_densities)
-
     return all_densities, kernel_points, kernel_radii
 
 
@@ -196,34 +190,7 @@ def project_component(grid_centers, grid_size, obj_points, obj_radii, kernel_poi
     # Store the densities in the output array
     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
 
-    # Apply Solid Isotropic Material Penalization (SIMP) to the densities
-    all_densities = penalize_densities(all_densities, penalty_factor=3)
-
-    # Apply a minimum density
-    all_densities = apply_minimum_density(all_densities)
-
     return all_densities, kernel_points, kernel_radii
-
-
-def combine_densities(*densities):
-    """
-    Combines multiple densities by taking the minimum value at each grid point.
-
-    Parameters:
-    ----------
-    densities : list of arrays
-        List of densities to combine.
-
-    Returns:
-    --------
-    combined_density : array
-        Combined density values.
-    """
-
-    # Combine the densities
-    combined_density = kreisselmeier_steinhauser_min(*densities)
-
-    return combined_density
 
 
 def penalize_densities(densities, penalty_factor=3, min_density=1e-3):
@@ -242,10 +209,7 @@ def penalize_densities(densities, penalty_factor=3, min_density=1e-3):
     # Apply SIMP penalization
     penalized_densities = densities ** penalty_factor
 
-    # Apply a minimum density for stability
-    stabilized_densities = jnp.maximum(penalized_densities, min_density)
-
-    return stabilized_densities
+    return penalized_densities
 
 
 def apply_minimum_density(densities, min_density=1e-3):
@@ -264,3 +228,36 @@ def apply_minimum_density(densities, min_density=1e-3):
     stabilized_densities = jnp.maximum(densities, min_density)
 
     return stabilized_densities
+
+
+def combine_densities(*densities, min_density=1e-3, penalty_factor=3):
+    """
+    Combines multiple densities by taking the minimum value at each grid point.
+
+    Parameters:
+    ----------
+    densities : list of arrays
+        List of densities to combine.
+
+    Returns:
+    --------
+    combined_density : array
+        Combined density values.
+    """
+
+    # Stack the densities along the last axis
+    densities = jnp.stack(densities, axis=3)
+
+    # Combine the densities
+    combined_density = kreisselmeier_steinhauser_max(densities, axis=3)
+
+    # Apply Solid Isotropic Material Penalization (SIMP) to the densities
+    combined_density = penalize_densities(combined_density, penalty_factor=penalty_factor)
+
+    # Apply a minimum density
+    combined_density = apply_minimum_density(combined_density, min_density=min_density)
+
+    return combined_density
+
+
+
