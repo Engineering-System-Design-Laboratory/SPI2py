@@ -13,8 +13,6 @@ from ..projection.grid_kernels import apply_kernel
 from ..geometry.spheres import get_aabb_indices
 from ..utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
 
-# ---- Utility Functions ---- #
-
 
 def regularized_Heaviside(x):
     H_tilde = 0.5 + 0.75 * x - 0.25 * x ** 3  # EQ 3 in 3D
@@ -27,48 +25,6 @@ def density(phi_b, r):
                     jnp.where(ratio > 1, 1,
                               regularized_Heaviside(ratio)))
     return rho
-
-
-def apply_minimum_density(densities, min_density=1e-3):
-    """
-    Applies a minimum density to the projected densities.
-
-    Parameters:
-    - densities: Projected densities (array of shape (nx, ny, nz)).
-    - min_density: Minimum allowable density for numerical stability.
-
-    Returns:
-    - Densities with a minimum density applied.
-    """
-
-    # Apply a minimum density for stability
-    stabilized_densities = jnp.maximum(densities, min_density)
-
-    return stabilized_densities
-
-
-
-
-def penalize_densities(densities, penalty_factor=3, min_density=1e-3):
-    """
-    Penalizes the projected densities using SIMP and applies a minimum density.
-
-    Parameters:
-    - densities: Projected densities (array of shape (nx, ny, nz)).
-    - penalty_factor: Exponent for the SIMP penalty.
-    - min_density: Minimum allowable density for numerical stability.
-
-    Returns:
-    - Penalized densities.
-    """
-
-    # Apply SIMP penalization
-    penalized_densities = densities ** penalty_factor
-
-    # Apply a minimum density for stability
-    stabilized_densities = jnp.maximum(penalized_densities, min_density)
-
-    return stabilized_densities
 
 
 def project_interconnect(grid_centers, grid_size,
@@ -131,16 +87,13 @@ def project_interconnect(grid_centers, grid_size,
     # Fix rho for mesh_radii?
     densities = density(distances, kernel_radii)
 
-    # Combine the pseudo densities for all kernel spheres in one grid
-    densities = jnp.sum(densities, axis=3, keepdims=True)
-
     # Sum densities across all cylinders
     # Combine the pseudo densities for all cylinders in each kernel sphere
     # Collapse the last axis to get the combined density for each kernel sphere
-    densities = kreisselmeier_steinhauser_max(densities, axis=4)
+    densities = jnp.sum(densities, axis=4)
 
     # Combine the pseudo densities for all kernel spheres in one grid
-    densities = densities.squeeze(3)
+    densities = jnp.sum(densities, axis=3)
 
     # Store the densities in the output array
     all_densities = all_densities.at[i1:i2 + 1, j1:j2 + 1, k1:k2 + 1].set(densities)
@@ -250,3 +203,64 @@ def project_component(grid_centers, grid_size, obj_points, obj_radii, kernel_poi
     all_densities = apply_minimum_density(all_densities)
 
     return all_densities, kernel_points, kernel_radii
+
+
+def combine_densities(*densities):
+    """
+    Combines multiple densities by taking the minimum value at each grid point.
+
+    Parameters:
+    ----------
+    densities : list of arrays
+        List of densities to combine.
+
+    Returns:
+    --------
+    combined_density : array
+        Combined density values.
+    """
+
+    # Combine the densities
+    combined_density = kreisselmeier_steinhauser_min(*densities)
+
+    return combined_density
+
+
+def penalize_densities(densities, penalty_factor=3, min_density=1e-3):
+    """
+    Penalizes the projected densities using SIMP and applies a minimum density.
+
+    Parameters:
+    - densities: Projected densities (array of shape (nx, ny, nz)).
+    - penalty_factor: Exponent for the SIMP penalty.
+    - min_density: Minimum allowable density for numerical stability.
+
+    Returns:
+    - Penalized densities.
+    """
+
+    # Apply SIMP penalization
+    penalized_densities = densities ** penalty_factor
+
+    # Apply a minimum density for stability
+    stabilized_densities = jnp.maximum(penalized_densities, min_density)
+
+    return stabilized_densities
+
+
+def apply_minimum_density(densities, min_density=1e-3):
+    """
+    Applies a minimum density to the projected densities.
+
+    Parameters:
+    - densities: Projected densities (array of shape (nx, ny, nz)).
+    - min_density: Minimum allowable density for numerical stability.
+
+    Returns:
+    - Densities with a minimum density applied.
+    """
+
+    # Apply a minimum density for stability
+    stabilized_densities = jnp.maximum(densities, min_density)
+
+    return stabilized_densities

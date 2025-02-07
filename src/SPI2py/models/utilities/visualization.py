@@ -4,7 +4,13 @@ from ..geometry.cylinders import create_cylinders
 from ..geometry.spheres import get_aabb_bounds
 
 
-def plot_grid(plotter, subplot_index, centers, size, densities=None, min_opacity=5e-3):
+def plot_grid(plotter,
+              subplot_index,
+              centers, size,
+              densities=None,
+              min_opacity=5e-3):
+
+    # Create the subplot
     plotter.subplot(*subplot_index)
     plotter.render_window.SetMultiSamples(0)
 
@@ -23,20 +29,9 @@ def plot_grid(plotter, subplot_index, centers, size, densities=None, min_opacity
     # Scale the cube so that its edge lengths equal the desired size.
     cube_template.points *= size
 
-    # If densities are provided, assign them as a scalar array.
-    # Note: glyphs don’t directly support per-glyph opacity.
-    # if densities is not None:
-    #     flat_densities = densities.flatten()
-    #     # Clamp densities to the range [min_opacity, 1.0]
-    #     opacities = np.maximum(min_opacity, np.minimum(flat_densities, 1.0))
-    #     points["opacity"] = opacities
-
     # Use the glyph filter to replicate the cube at each point.
     # Since each cube is already scaled to 'size', we disable further scaling.
     glyphs = points.glyph(orient=False, scale=False, geom=cube_template)
-
-    # # Add the combined glyph mesh.
-    # plotter.add_mesh(glyphs, color='black', opacity='opacity', lighting=False)
 
     # If densities are provided, create an RGBA array for per-glyph opacity.
     if densities is not None:
