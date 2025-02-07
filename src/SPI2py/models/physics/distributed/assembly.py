@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 from .element import element_stiffness_matrix
-from .quadrature import gauss_pts
+from .quadrature import gauss_pts, gauss_wts
 
 
 def assemble_global_system(nodes, elements, density, base_k, penal):
@@ -29,7 +29,7 @@ def assemble_global_system(nodes, elements, density, base_k, penal):
         k_eff = base_k * (density[e] ** penal)
         elem_nodes_idx = elements[e]
         elem_nodes = nodes[elem_nodes_idx]
-        Ke = element_stiffness_matrix(elem_nodes, k_eff, gauss_pts)  # TODO and weights?
+        Ke = element_stiffness_matrix(elem_nodes, k_eff, gauss_pts, gauss_wts)  # TODO and weights?
         # Scatter assembly into the global stiffness matrix:
         for i_local in range(8):
             i_global = elem_nodes_idx[i_local]

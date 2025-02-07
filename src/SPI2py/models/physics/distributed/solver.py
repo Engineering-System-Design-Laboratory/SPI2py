@@ -11,8 +11,13 @@ def solve_system(K, f):
     return T
 
 
-def fea_3d_thermal(nx, ny, nz, lx, ly, lz,
-                   base_k, penal, density, h, T_inf,
+def fea_3d_thermal(nx, ny, nz,
+                   lx, ly, lz,
+                   base_k,
+                   penal,
+                   density,
+                   h,
+                   T_inf,
                    fixed_nodes, fixed_values, convection_nodes, conv_area):
     """
     Full pipeline for the 3D FEA:

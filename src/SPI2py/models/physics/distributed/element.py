@@ -1,8 +1,8 @@
 import jax.numpy as jnp
-from .quadrature import shape_functions, gauss_pts
+from .quadrature import shape_functions
 
 
-def element_stiffness_matrix(element_nodes, k_eff, gauss_pts):
+def element_stiffness_matrix(element_nodes, k_eff, gauss_pts, gauss_wts):
     """
     Compute the local 8x8 stiffness matrix for a hexahedral element.
 
@@ -14,21 +14,25 @@ def element_stiffness_matrix(element_nodes, k_eff, gauss_pts):
       Ke: (8,8) element stiffness matrix.
     """
     Ke = jnp.zeros((8, 8))
-    # Loop over the 2x2x2 Gauss points.
-    for xi in gauss_pts:
-        for eta in gauss_pts:
-            for zeta in gauss_pts:
-                # Evaluate shape functions and their derivatives at this quadrature point.
+    # Loop over the 2x2x2 Gauss points with indices to use the weights.
+    for i, xi in enumerate(gauss_pts):
+        w_xi = gauss_wts[i]
+        for j, eta in enumerate(gauss_pts):
+            w_eta = gauss_wts[j]
+            for k, zeta in enumerate(gauss_pts):
+                w_zeta = gauss_wts[k]
+                # Total weight for this quadrature point:
+                w_total = w_xi * w_eta * w_zeta
+
+                # Evaluate shape functions and their derivatives at (xi, eta, zeta)
                 N, dN_dxi = shape_functions(xi, eta, zeta)
-                # Compute the Jacobian matrix: J_{mn} = sum_{i=0}^{7} x_i[m] * dN_i/dxi_n
+                # Compute the Jacobian matrix J (3x3) for this quadrature point.
                 J = jnp.zeros((3, 3))
-                for i in range(8):
-                    # Outer product: node coordinate (3,) with derivative (3,)
-                    J = J + jnp.outer(element_nodes[i], dN_dxi[i])
+                for i_node in range(8):
+                    J = J + jnp.outer(element_nodes[i_node], dN_dxi[i_node])
                 detJ = jnp.abs(jnp.linalg.det(J))
-                # Map derivatives to physical coordinates:
-                # dN_dx: (8,3) where for each node: dN_dx = J^{-1} * dN_dxi (for that node)
+                # Map derivatives to physical coordinates: dN_dx = J^{-1} * dN_dxi
                 dN_dx = jnp.linalg.solve(J, dN_dxi.T).T  # shape (8,3)
-                # Contribution: for conduction the bilinear form is grad(N_i) dot grad(N_j)
-                Ke = Ke + k_eff * (dN_dx @ dN_dx.T) * detJ
+                # Add the weighted contribution to the element stiffness matrix.
+                Ke = Ke + k_eff * (dN_dx @ dN_dx.T) * detJ * w_total
     return Ke
