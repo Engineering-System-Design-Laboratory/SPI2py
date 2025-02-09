@@ -1,6 +1,6 @@
 import jax.numpy as jnp
-from .mesh import generate_mesh
-from .assembly import assemble_global_system, apply_convection_bc, apply_dirichlet_bc
+from .mesh import generate_mesh, find_active_nodes, find_face_nodes
+from .assembly import assemble_global_system, apply_dirichlet_bc, apply_robin_bc, apply_load
 
 
 def solve_system(K, f):
@@ -14,7 +14,6 @@ def solve_system(K, f):
 def fea_3d_thermal(nx, ny, nz,
                    lx, ly, lz,
                    base_k,
-                   penal,
                    density,
                    h,
                    T_inf,
@@ -30,7 +29,6 @@ def fea_3d_thermal(nx, ny, nz,
       nx,ny,nz   : Number of elements in each coordinate direction.
       lx,ly,lz   : Domain dimensions.
       base_k     : Base thermal conductivity.
-      penal      : Penalization exponent for the density.
       density    : (n_elements,) array of density values (from geometry projection).
       h          : Convection coefficient.
       T_inf      : Ambient temperature for convection.
@@ -45,8 +43,8 @@ def fea_3d_thermal(nx, ny, nz,
       T: Computed nodal temperature distribution.
     """
     nodes, elements = generate_mesh(nx, ny, nz, lx, ly, lz)
-    K, f = assemble_global_system(nodes, elements, density, base_k, penal)
-    K, f = apply_convection_bc(K, f, convection_nodes, h, T_inf, conv_area)
+    K, f = assemble_global_system(nodes, elements, density, base_k)
+    K, f = apply_robin_bc(K, f, convection_nodes, h, T_inf, conv_area)
     K, f = apply_dirichlet_bc(K, f, fixed_nodes, fixed_values)
     T = solve_system(K, f)
     return nodes, elements, T
