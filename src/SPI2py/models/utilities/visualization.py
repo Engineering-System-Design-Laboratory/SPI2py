@@ -1,5 +1,6 @@
 import numpy as np
 import pyvista as pv
+import matplotlib.cm as mpl_cm
 from ..geometry.cylinders import create_cylinders
 from ..geometry.spheres import get_aabb_bounds
 
@@ -168,6 +169,115 @@ def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), 
     plotter.add_mesh(mesh, color='lightgray', opacity=opacity, lighting=False)
 
 
+# def element_to_node_density(element_density, dims):
+#     """
+#     Convert an element-centered density field (shape (nx, ny, nz))
+#     into a nodal density field (shape dims, where dims = (nx+1, ny+1, nz+1))
+#     by averaging the densities of adjacent elements.
+#     """
+#     nx, ny, nz = element_density.shape
+#     # dims must equal (nx+1, ny+1, nz+1)
+#     if dims != (nx + 1, ny + 1, nz + 1):
+#         raise ValueError("dims must be (density.shape[0]+1, density.shape[1]+1, density.shape[2]+1)")
+#
+#     node_density = np.zeros(dims)
+#     count = np.zeros(dims)
+#     for i in range(nx):
+#         for j in range(ny):
+#             for k in range(nz):
+#                 # The element at (i,j,k) contributes to 8 nodes:
+#                 node_density[i:i + 2, j:j + 2, k:k + 2] += element_density[i, j, k]
+#                 count[i:i + 2, j:j + 2, k:k + 2] += 1
+#     count[count == 0] = 1
+#     return node_density / count
+#
+#
+# def plot_temperature_distribution(plotter,
+#                                   subplot_index,
+#                                   nodes,
+#                                   T,
+#                                   density,
+#                                   convection_nodes,
+#                                   fixed_nodes,
+#                                   dims,
+#                                   cmap="inferno",
+#                                   min_opacity=5e-3):
+#     """
+#     Visualize the 3D temperature distribution on a structured grid using PyVista,
+#     and modulate the opacity according to a provided density field.
+#
+#     Parameters:
+#       plotter          : PyVista plotter instance.
+#       subplot_index    : Tuple specifying the subplot location.
+#       nodes            : NumPy array of shape (n_nodes, 3) with node coordinates.
+#       T                : NumPy array of nodal temperatures (n_nodes,).
+#       density          : NumPy array of element densities, shape (nx, ny, nz).
+#       convection_nodes : 1D NumPy array of indices for nodes on the convection boundary.
+#       fixed_nodes      : 1D NumPy array of indices for nodes with fixed (Dirichlet) conditions.
+#       dims             : Tuple (nx+1, ny+1, nz+1) that exactly describes the nodal grid.
+#       cmap             : Name of the colormap to use (default "inferno").
+#       min_opacity      : Minimum opacity to assign to very low density.
+#     """
+#     # Check that the grid dimensions match the nodes.
+#     expected_nodes = np.prod(dims)
+#     if nodes.shape[0] != expected_nodes:
+#         raise ValueError(f"Number of nodes ({nodes.shape[0]}) does not match product of dims ({expected_nodes}).")
+#     if T.size != expected_nodes:
+#         raise ValueError(
+#             f"Temperature array size ({T.size}) does not match expected number of nodes ({expected_nodes}).")
+#
+#     # Reshape nodes into structured grid.
+#     try:
+#         grid_points = nodes.reshape(dims + (3,))
+#     except ValueError:
+#         raise ValueError("Nodes cannot be reshaped to the provided dimensions.")
+#
+#     grid = pv.StructuredGrid()
+#     grid.points = grid_points.reshape(-1, 3)
+#     grid.dimensions = dims
+#     grid["Temperature"] = T
+#
+#     # Convert the element-centered density to a nodal density field.
+#     nodal_density = element_to_node_density(density, dims)
+#     flat_nodal_density = nodal_density.flatten()
+#     if flat_nodal_density.shape[0] != expected_nodes:
+#         raise ValueError(
+#             f"Converted nodal density has length {flat_nodal_density.shape[0]}, expected {expected_nodes}.")
+#
+#     # Normalize the temperature field for colormap mapping.
+#     T_min, T_max = np.min(T), np.max(T)
+#     T_norm = (T - T_min) / (T_max - T_min + 1e-8)
+#     colormap = mpl_cm.get_cmap(cmap)
+#     # Map normalized temperature to RGBA colors. This should return an array of shape (expected_nodes, 4).
+#     colors = colormap(T_norm)  # values in [0,1]
+#
+#     # Override the alpha channel with the nodal density.
+#     # Clamp nodal density values to [min_opacity, 1.0].
+#     alphas = np.clip(flat_nodal_density, min_opacity, 1.0)
+#     # Check if colors has 4 channels.
+#     if colors.shape[1] != 4:
+#         # If the colormap returns only 3 channels, add an alpha channel.
+#         colors = np.concatenate([colors, np.ones((colors.shape[0], 1))], axis=1)
+#     colors[:, 3] = alphas  # Set the alpha channel
+#
+#     # Convert to 8-bit integer format.
+#     rgba = (colors * 255).astype(np.uint8)
+#     grid.point_data["RGBA"] = rgba
+#
+#     # Add the grid mesh using the RGBA values.
+#     plotter.add_mesh(grid, rgba=True, show_edges=True)
+#
+#     # Overlay markers for convection and fixed nodes.
+#     conv_points = nodes[convection_nodes]
+#     fixed_points = nodes[fixed_nodes]
+#     conv_poly = pv.PolyData(conv_points)
+#     fixed_poly = pv.PolyData(fixed_points)
+#     plotter.add_mesh(conv_poly, color="blue", point_size=10, render_points_as_spheres=True, label="Convection BC")
+#     plotter.add_mesh(fixed_poly, color="red", point_size=10, render_points_as_spheres=True, label="Dirichlet BC")
+#     plotter.add_legend()
+
+
+
 def plot_temperature_distribution(plotter,
                                   subplot_index,
                                   nodes,
@@ -176,7 +286,7 @@ def plot_temperature_distribution(plotter,
                                   fixed_nodes,
                                   dims=None,
                                   cmap="inferno",
-                                  opacity=0.75):
+                                  opacity=0.5):
     """
     Visualize the 3D temperature distribution on a structured grid using PyVista.
 
@@ -227,7 +337,7 @@ def plot_temperature_distribution(plotter,
     plotter.add_mesh(conv_poly, color="blue", point_size=10, render_points_as_spheres=True, label="Convection BC")
     plotter.add_mesh(fixed_poly, color="red", point_size=10, render_points_as_spheres=True, label="Dirichlet BC")
     plotter.add_legend()
-    plotter.show()
+    # plotter.show()
 
 # def plot_problem(prob):
 #     """

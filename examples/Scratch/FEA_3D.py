@@ -10,33 +10,34 @@ from SPI2py.models.utilities.visualization import plot_temperature_distribution
 # Domain and discretization parameters:
 nx, ny, nz = 5, 5, 5
 lx, ly, lz = 2.0, 2.0, 2.0
-base_k = 1.0
-penal = 3.0
+
 
 # For simplicity, assume all elements are “solid” (density = 1.0)
 nodes_temp, elements_temp = generate_mesh(nx, ny, nz, lx, ly, lz)
 n_elem = elements_temp.shape[0]
 density = jnp.ones(n_elem)
 
-# Define convection: let the top face (z = lz) have convection.
-nodes_np = np.array(nodes_temp)
-robin_nodes = find_face_nodes(nodes_np, jnp.array([0.0, 0.0, 1.0]))
+
 
 # Assume each convection node represents an equal share of the top surface area.
 conv_area = (lx * ly) / ((nx + 1) * (ny + 1))
-h = 10.0
-T_inf = 300.0
+
 
 # Define Dirichlet BCs: for example, the bottom face (z=0) is fixed at 300.
+robin_nodes = find_face_nodes(nodes_temp, jnp.array([0.0, 0.0, 1.0]))
 dirichlet_nodes = find_face_nodes(nodes_temp, jnp.array([0.0, 0.0, -1.0]))
 
 # Run the FEA pipeline.
-nodes, elements, T = fea_3d_thermal(
-    nx, ny, nz, lx, ly, lz,
-    base_k, density, h, T_inf,
-    dirichlet_nodes, 200,
-    robin_nodes, conv_area
-)
+nodes, elements, T = fea_3d_thermal(nx, ny, nz,
+                                    lx, ly, lz,
+                                    base_k=1.0,
+                                    density=density,
+                                    h=10.0,  # Convection coefficient
+                                    T_inf=300.0,  # Ambient temperature for convection
+                                    fixed_nodes=dirichlet_nodes,
+                                    fixed_values=200,
+                                    convection_nodes=robin_nodes,
+                                    conv_area=conv_area)
 
 # Convert the resulting temperature field to a NumPy array for further processing or plotting.
 T_np = np.array(T)

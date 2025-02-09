@@ -17,7 +17,10 @@ def fea_3d_thermal(nx, ny, nz,
                    density,
                    h,
                    T_inf,
-                   fixed_nodes, fixed_values, convection_nodes, conv_area):
+                   fixed_nodes,
+                   fixed_values,
+                   convection_nodes,
+                   conv_area):
     """
     Full pipeline for the 3D FEA:
       - Mesh generation
@@ -42,6 +45,7 @@ def fea_3d_thermal(nx, ny, nz,
       elements: Element connectivity.
       T: Computed nodal temperature distribution.
     """
+    # TODO Apply BC here... Also, capture when multiple BC/loads specified for same node...
     nodes, elements = generate_mesh(nx, ny, nz, lx, ly, lz)
     K, f = assemble_global_system(nodes, elements, density, base_k)
     K, f = apply_robin_bc(K, f, convection_nodes, h, T_inf, conv_area)
