@@ -278,6 +278,10 @@ def plot_stl_file(plotter, subplot_index, stl_file_path, translation=(0, 0, 0), 
 
 
 
+
+
+
+
 def plot_temperature_distribution(plotter,
                                   subplot_index,
                                   nodes,
@@ -285,8 +289,9 @@ def plot_temperature_distribution(plotter,
                                   convection_nodes,
                                   fixed_nodes,
                                   dims=None,
-                                  cmap="inferno",
-                                  opacity=0.5):
+                                  cmap="rainbow",
+                                  opacity=0.25,
+                                  climits=(0, 300)):
     """
     Visualize the 3D temperature distribution on a structured grid using PyVista.
 
@@ -332,12 +337,20 @@ def plot_temperature_distribution(plotter,
     conv_poly = pv.PolyData(conv_points)
     fixed_poly = pv.PolyData(fixed_points)
 
+    # # Add dummy scalar values to enforce the colormap range
+    # T_with_limits = np.concatenate(([climits[0]], T, [climits[1]]))
+    # grid["Temperature"] = T_with_limits
+
     # Setup PyVista plotter.
-    plotter.add_mesh(grid, scalars="Temperature", cmap=cmap, opacity=opacity, show_edges=True)
+    vol = plotter.add_volume(grid, scalars="Temperature", cmap=cmap, clim=(0,1), opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
     plotter.add_mesh(conv_poly, color="blue", point_size=10, render_points_as_spheres=True, label="Convection BC")
     plotter.add_mesh(fixed_poly, color="red", point_size=10, render_points_as_spheres=True, label="Dirichlet BC")
     plotter.add_legend()
-    # plotter.show()
+
+    # Force the scalar range on the volume mapper
+    vol.mapper.scalar_range = climits
+
+    vol.prop.interpolation_type = 'linear'
 
 # def plot_problem(prob):
 #     """
