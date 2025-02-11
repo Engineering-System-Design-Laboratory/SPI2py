@@ -23,6 +23,36 @@ class TestPressureDropCalculation(unittest.TestCase):
         
         self.assertIsInstance(pressure_drop, float)
         self.assertGreater(pressure_drop, 0)
+
+    def test_pipe_with_0_degree_bend(self):
+        """Test pressure drop in a straight horizontal pipe"""
+        coordinates1 = [
+            (0, 0, 0),
+            (0, 10, 0),
+            (0,20,0)  # 20m long horizontal pipe
+        ]
+        
+        pressure_drop1 = calculate_pressure_drop(
+            coordinates=coordinates1,
+            pipe_radius=self.test_radius,
+            flow_rate=self.test_flow_rate
+        )
+        coordinates2 = [
+            (0, 0, 0),
+            (0,20,0)  # 20m long horizontal pipe
+        ]
+        
+        pressure_drop2 = calculate_pressure_drop(
+            coordinates=coordinates1,
+            pipe_radius=self.test_radius,
+            flow_rate=self.test_flow_rate
+        )
+        
+        self.assertIsInstance(pressure_drop1, float)
+        self.assertGreater(pressure_drop1, 0)
+        self.assertIsInstance(pressure_drop2, float)
+        self.assertGreater(pressure_drop2, 0)
+        self.assertAlmostEqual(pressure_drop1, pressure_drop2, delta=1)
     
     def test_pipe_with_90_degree_bend(self):
         """Test pressure drop in a pipe with a 90-degree bend"""
