@@ -48,6 +48,23 @@ def shape_functions(xi, eta, zeta):
     return N, dN_dxi
 
 
-# Define Gauss quadrature points (2-point rule in each direction)
-gauss_pts = jnp.array([-1.0 / jnp.sqrt(3.0), 1.0 / jnp.sqrt(3.0)])
-gauss_wts = jnp.array([1.0, 1.0])  # For a 2-point Gauss-Legendre rule in [-1,1]
+def gauss_quad(n_qp=2):
+    """
+    Return the Gauss quadrature points and weights for a 3D hexahedron.
+
+    Parameters:
+      n_qp: Number of quadrature points in each direction.
+
+    Returns:
+      gauss_pts: Array of quadrature points of shape (n_qp,).
+      gauss_wts: Array of quadrature weights of shape (n_qp,).
+    """
+
+    if n_qp == 2:
+        # Define Gauss quadrature points (2-point rule in each direction)
+        gauss_pts = jnp.array([-1.0 / jnp.sqrt(3.0), 1.0 / jnp.sqrt(3.0)])
+        gauss_wts = jnp.array([1.0, 1.0])
+    else:
+        raise NotImplementedError("Only 2-point Gauss quadrature is supported for now.")
+
+    return gauss_pts, gauss_wts

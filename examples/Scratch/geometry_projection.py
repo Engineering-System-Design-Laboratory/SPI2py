@@ -12,6 +12,7 @@ from SPI2py.models.physics.distributed.solver import fea_3d_thermal
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
 # Create grid
+# el_size = 0.5
 el_size = 0.5
 el_centers = create_grid(0, 2, 0, 4, 0,  2, element_size=el_size)
 nx, ny, nz, _, _ = el_centers.shape
