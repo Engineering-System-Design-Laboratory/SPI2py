@@ -3,6 +3,58 @@ import jax.numpy as jnp
 
 def generate_mesh(nx, ny, nz, lx, ly, lz):
     """
+    Generate a uniform structured grid in 3D using explicit Python loops.
+
+    Parameters:
+      nx, ny, nz: Number of elements along x, y, z.
+      lx, ly, lz: Physical dimensions along x, y, z.
+
+    Returns:
+      nodes: (n_nodes, 3) array of coordinates (n_nodes = (nx+1)*(ny+1)*(nz+1)).
+      elements: (n_elements, 8) connectivity array (indices into nodes,
+                n_elements = nx*ny*nz).
+    """
+
+    # Compute spacing
+    dx = lx / nx
+    dy = ly / ny
+    dz = lz / nz
+
+    # Generate nodes by looping over each coordinate.
+    nodes_list = []
+    for i in range(nx + 1):
+        x = i * dx
+        for j in range(ny + 1):
+            y = j * dy
+            for k in range(nz + 1):
+                z = k * dz
+                nodes_list.append([x, y, z])
+    nodes = jnp.array(nodes_list)
+
+    # Now, create the element connectivity.
+    # The node numbering is assumed to be:
+    # index = i * ((ny+1) * (nz+1)) + j * (nz+1) + k.
+    elements_list = []
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                # Compute the indices for the 8 nodes of the hexahedral element.
+                n0 = i * ((ny + 1) * (nz + 1)) + j * (nz + 1) + k
+                n1 = (i + 1) * ((ny + 1) * (nz + 1)) + j * (nz + 1) + k
+                n2 = (i + 1) * ((ny + 1) * (nz + 1)) + (j + 1) * (nz + 1) + k
+                n3 = i * ((ny + 1) * (nz + 1)) + (j + 1) * (nz + 1) + k
+                n4 = i * ((ny + 1) * (nz + 1)) + j * (nz + 1) + (k + 1)
+                n5 = (i + 1) * ((ny + 1) * (nz + 1)) + j * (nz + 1) + (k + 1)
+                n6 = (i + 1) * ((ny + 1) * (nz + 1)) + (j + 1) * (nz + 1) + (k + 1)
+                n7 = i * ((ny + 1) * (nz + 1)) + (j + 1) * (nz + 1) + (k + 1)
+                elements_list.append([n0, n1, n2, n3, n4, n5, n6, n7])
+    elements = jnp.array(elements_list)
+    return nodes, elements
+
+
+
+def generate_mesh_vec(nx, ny, nz, lx, ly, lz):
+    """
     Generate a uniform structured grid in 3D (vectorized version).
 
     Returns:

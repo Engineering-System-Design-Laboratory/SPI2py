@@ -1,9 +1,27 @@
 import jax
 import jax.numpy as jnp
-from .quadrature import shape_functions, gauss_quad
+from .element import assemble_local_stiffness_matrix
+from .quadrature import shape_functions_vec, gauss_quad
 
 
-def assemble_global_system(nodes, elements, density, base_k):
+def assemble_global_stiffness_matrix(nodes, elements, density, base_k, gauss_pts, gauss_wts):
+    n_nodes = nodes.shape[0]
+    K_global = jnp.zeros((n_nodes, n_nodes))
+    n_elem = elements.shape[0]
+    for e in range(n_elem):
+        k_eff = base_k * density[e]
+        elem_nodes_idx = elements[e]
+        elem_nodes = nodes[elem_nodes_idx]
+        Ke = assemble_local_stiffness_matrix(elem_nodes, k_eff, gauss_pts, gauss_wts)
+        for i_local in range(8):
+            i_global = elem_nodes_idx[i_local]
+            for j_local in range(8):
+                j_global = elem_nodes_idx[j_local]
+                K_global = K_global.at[i_global, j_global].add(Ke[i_local, j_local])
+    return K_global
+
+
+def assemble_global_stiffness_matrix_vec(nodes, elements, density, base_k):
     """
     Assemble the global stiffness matrix K and load vector f in a fully vectorized way without using vmap.
 
@@ -47,7 +65,7 @@ def assemble_global_system(nodes, elements, density, base_k):
     #    shape_functions_vec should accept arrays of quadrature points and return:
     #      N_all: (n_qp, 8)
     #      dN_dxi_all: (n_qp, 8, 3)
-    N_all, dN_dxi_all = shape_functions(xi, eta, zeta)
+    N_all, dN_dxi_all = shape_functions_vec(xi, eta, zeta)
 
     # 6. Compute the Jacobian for each element at each quadrature point.
     #    For each element e and quadrature point q:
@@ -102,69 +120,105 @@ def assemble_global_system(nodes, elements, density, base_k):
     f_global = jnp.zeros(n_nodes)
     return K_global, f_global
 
-def apply_dirichlet_bc(K, f, fixed_indices, fixed_value, penalty=1e12):
+
+def combine_fixed_conditions(fixed_nodes_list, fixed_values_list):
     """
-    Enforce Dirichlet (fixed) boundary conditions on the DOFs in fixed_indices.
-    This sets the corresponding rows in K to zero, then sets the diagonal to a large number (penalty),
-    and adjusts f to enforce the fixed value.
+    Combine multiple sets of fixed nodes and their prescribed values into single arrays.
+
+    Parameters:
+      fixed_nodes_list: a list (or tuple) of 1D arrays of fixed node indices.
+      fixed_values_list: a list (or tuple) of 1D arrays (or scalars) of prescribed values,
+                         corresponding to each set of fixed nodes.
+
+    Returns:
+      combined_fixed_nodes: a 1D array containing all fixed node indices.
+      combined_fixed_values: a 1D array containing the prescribed value for each fixed node.
+
+    Note: If any of the fixed_values in the list is a scalar, it is broadcasted to match the size
+    of its corresponding fixed_nodes array.
+    """
+    combined_nodes = []
+    combined_values = []
+    for nodes_i, values_i in zip(fixed_nodes_list, fixed_values_list):
+        # Ensure values_i is a 1D array broadcasted to the same length as nodes_i.
+        values_i = jnp.broadcast_to(jnp.atleast_1d(values_i), (nodes_i.shape[0],))
+        combined_nodes.append(nodes_i)
+        combined_values.append(values_i)
+
+    combined_fixed_nodes = jnp.concatenate(combined_nodes)
+    combined_fixed_values = jnp.concatenate(combined_values)
+    return combined_fixed_nodes, combined_fixed_values
+
+
+
+def apply_dirichlet_bc(K, f, fixed_indices, fixed_values):
+    """
+    Partition the global system to enforce Dirichlet (fixed) BCs.
 
     Parameters:
       K: Global stiffness matrix (n_nodes x n_nodes).
       f: Global load vector (n_nodes,).
       fixed_indices: 1D array of node indices (DOFs) to be fixed.
-      fixed_value: The prescribed value at these DOFs.
-      penalty: A large number used to enforce the condition.
+      fixed_values: 1D array (or scalar broadcastable) of prescribed values at these DOFs.
 
     Returns:
-      Updated (K, f) with Dirichlet conditions applied.
+      free_indices: 1D array of indices corresponding to free DOFs.
+      K_ff: Reduced stiffness matrix for free DOFs.
+      f_free: Modified load vector for free DOFs: f_free = f_free - K_fd * fixed_values.
     """
-    # Zero out the rows corresponding to fixed indices.
-    K = K.at[fixed_indices, :].set(0.0)
 
-    # Set the diagonal entries for these indices to a large penalty.
-    K = K.at[fixed_indices, fixed_indices].set(penalty)
+    # Broadcast fixed_values to have shape (number of fixed DOFs,)
+    fixed_values = jnp.broadcast_to(fixed_values, (fixed_indices.shape[0],))
 
-    # Adjust the load vector so that f[i] = penalty * fixed_value for each fixed DOF.
-    f = f.at[fixed_indices].set(penalty * fixed_value)
+    n_nodes = K.shape[0]
+    all_indices = jnp.arange(n_nodes)
+    free_indices = jnp.setdiff1d(all_indices, fixed_indices)
 
-    return K, f
+    K_ff = K[free_indices][:, free_indices]
+    K_fd = K[free_indices][:, fixed_indices]
+    f_free = f[free_indices] - K_fd @ fixed_values
+
+    return free_indices, K_ff, f_free
 
 
-def apply_robin_bc(K, f, robin_indices, h, Tinf, area):
+def apply_robin_bc(K, f, robin_indices, h, T_inf, area):
     """
-    Enforce Robin (convective) boundary conditions on the DOFs in robin_indices.
-    This adds h*area to the diagonal of K and h*area*Tinf to f.
+    Incorporate a Robin (convective) boundary condition by modifying K and f.
+
+    For nodes in robin_indices, add h*area to the diagonal of K and
+    add h*area*T_inf to f.
 
     Parameters:
       K: Global stiffness matrix (n_nodes x n_nodes).
       f: Global load vector (n_nodes,).
-      robin_indices: 1D array of node indices to which the Robin BC is applied.
+      robin_indices: 1D array of node indices where the Robin BC is applied.
       h: Convection coefficient.
-      Tinf: Ambient temperature.
-      area: The effective area associated with each node.
+      T_inf: Ambient (free-stream) temperature.
+      area: Effective area associated with each Robin node.
 
     Returns:
-      Updated (K, f) with Robin BC contributions.
+      K_new, f_new: The modified stiffness matrix and load vector.
     """
-    # Add the convective contribution to the diagonal of K.
-    K = K.at[robin_indices, robin_indices].add(h * area)
-    # Add the corresponding contribution to f.
-    f = f.at[robin_indices].add(h * area * Tinf)
-    return K, f
+    # Add the Robin (convective) contribution to the diagonal entries.
+    K_new = K.at[robin_indices, robin_indices].add(h * area)
+    # Add the corresponding contribution to the load vector.
+    f_new = f.at[robin_indices].add(h * area * T_inf)
+    return K_new, f_new
 
 
-def apply_load(f, load_indices, load_value):
-    """
-    Apply a prescribed load to the specified nodes by adding load_value to f.
-
-    Parameters:
-      f: Global load vector (n_nodes,).
-      load_indices: 1D array of node indices where the load is applied.
-      load_value: The load value (e.g., a heat source or force).
-
-    Returns:
-      Updated load vector f.
-    """
-    f = f.at[load_indices].add(load_value)
-    return f
+# def apply_load(f, load_indices, load_value):
+#     """
+#     Apply a prescribed load to the specified nodes by adding load_value to f.
+#
+#     Parameters:
+#       f: Global load vector (n_nodes,).
+#       load_indices: 1D array of node indices where the load is applied.
+#       load_value: The load value (e.g., a heat source or force).
+#
+#     Returns:
+#       Updated load vector f.
+#
+#     """
+#     f = f.at[load_indices].add(load_value)
+#     return f
 

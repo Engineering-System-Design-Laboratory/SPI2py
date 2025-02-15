@@ -286,8 +286,9 @@ def plot_temperature_distribution(plotter,
                                   subplot_index,
                                   nodes,
                                   T,
-                                  convection_nodes,
-                                  fixed_nodes,
+                                  robin_nodes,
+                                  dirichlet_nodes,
+                                  source_nodes,
                                   dims=None,
                                   cmap="rainbow",
                                   opacity=0.25,
@@ -300,8 +301,8 @@ def plot_temperature_distribution(plotter,
         subplot_index    : Tuple (i, j) specifying the subplot location.
       nodes            : NumPy array of shape (n_nodes,3) with node coordinates.
       T                : NumPy array of nodal temperatures.
-      convection_nodes : 1D NumPy array of indices for nodes on the convection boundary.
-      fixed_nodes      : 1D NumPy array of indices for nodes with Dirichlet conditions.
+      robin_nodes : 1D NumPy array of indices for nodes on the convection boundary.
+      dirichlet_nodes      : 1D NumPy array of indices for nodes with Dirichlet conditions.
       dims             : Tuple (nx+1, ny+1, nz+1) defining grid dimensions. If None, it is inferred.
       origin           : Grid origin (default (0,0,0)).
       cmap             : Colormap for temperature (default "inferno").
@@ -332,19 +333,15 @@ def plot_temperature_distribution(plotter,
     grid["Temperature"] = T
 
     # Create PolyData for convection boundary and fixed (Dirichlet) nodes.
-    conv_points = nodes[convection_nodes]
-    fixed_points = nodes[fixed_nodes]
-    conv_poly = pv.PolyData(conv_points)
-    fixed_poly = pv.PolyData(fixed_points)
-
-    # # Add dummy scalar values to enforce the colormap range
-    # T_with_limits = np.concatenate(([climits[0]], T, [climits[1]]))
-    # grid["Temperature"] = T_with_limits
+    robin_points = nodes[robin_nodes]
+    dirichlet_points = nodes[dirichlet_nodes]
+    robin_poly = pv.PolyData(robin_points)
+    dirichlet_poly = pv.PolyData(dirichlet_points)
 
     # Setup PyVista plotter.
-    vol = plotter.add_volume(grid, scalars="Temperature", cmap=cmap, clim=(0,1), opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
-    plotter.add_mesh(conv_poly, color="blue", point_size=10, render_points_as_spheres=True, label="Convection BC")
-    plotter.add_mesh(fixed_poly, color="red", point_size=10, render_points_as_spheres=True, label="Dirichlet BC")
+    vol = plotter.add_volume(grid, scalars="Temperature", cmap=cmap, clim=climits, opacity=opacity, show_scalar_bar=True, scalar_bar_args={'title': 'Temperature'})
+    plotter.add_mesh(robin_poly, color="blue", point_size=10, render_points_as_spheres=True, label="Robin BC")
+    plotter.add_mesh(dirichlet_poly, color="red", point_size=10, render_points_as_spheres=True, label="Dirichlet BC")
     plotter.add_legend()
 
     # Force the scalar range on the volume mapper

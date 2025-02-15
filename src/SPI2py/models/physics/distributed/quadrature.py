@@ -2,6 +2,31 @@ import jax.numpy as jnp
 
 
 def shape_functions(xi, eta, zeta):
+    # For a standard hexahedral element, these are trilinear shape functions.
+    # The eight reference nodes of the hexahedron are at (-1,-1,-1), (1,-1,-1), (1,1,-1), (-1,1,-1),
+    # (-1,-1,1), (1,-1,1), (1,1,1), (-1,1,1).
+    node_ref = jnp.array([
+        [-1, -1, -1],
+        [ 1, -1, -1],
+        [ 1,  1, -1],
+        [-1,  1, -1],
+        [-1, -1,  1],
+        [ 1, -1,  1],
+        [ 1,  1,  1],
+        [-1,  1,  1]
+    ])
+    # Trilinear shape functions:
+    N = 1/8.0 * (1 + xi * node_ref[:, 0]) * (1 + eta * node_ref[:, 1]) * (1 + zeta * node_ref[:, 2])
+    # Their derivatives (with respect to xi, eta, zeta):
+    dN_dxi = jnp.stack([
+        1/8.0 * node_ref[:, 0] * (1 + eta * node_ref[:, 1]) * (1 + zeta * node_ref[:, 2]),
+        1/8.0 * node_ref[:, 1] * (1 + xi  * node_ref[:, 0]) * (1 + zeta * node_ref[:, 2]),
+        1/8.0 * node_ref[:, 2] * (1 + xi  * node_ref[:, 0]) * (1 + eta  * node_ref[:, 1])
+    ], axis=1)
+    return N, dN_dxi
+
+
+def shape_functions_vec(xi, eta, zeta):
     """
     Vectorized evaluation of the trilinear shape functions and their derivatives.
 
