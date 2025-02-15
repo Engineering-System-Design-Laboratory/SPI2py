@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 from .mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
-from .assembly import assemble_global_stiffness_matrix_vec, apply_dirichlet_bc, apply_robin_bc, combine_fixed_conditions
+from .assembly import assemble_global_stiffness_matrix_vec, apply_dirichlet_bc, apply_robin_bc, combine_fixed_conditions, partition_global_system
 
 
 def solve_system(K, f):
@@ -143,10 +143,27 @@ def solve_system_partitioned(nx, ny, nz,
     # Partition the system for Dirichlet BCs.
     # (apply_dirichlet_bc_partition is assumed to enforce that fixed_values is already a 1D array.)
     combined_fixed_nodes, combined_fixed_values = combine_fixed_conditions([fixed_nodes, comp_nodes], [fixed_values, comp_temp])
-    free_indices, K_ff, f_free = apply_dirichlet_bc(K_mod, f_mod, combined_fixed_nodes, combined_fixed_values)
+    # free_indices, K_ff, f_free = apply_dirichlet_bc(K_mod, f_mod, combined_fixed_nodes, combined_fixed_values)
+
+    # Compute the modified load vector for free DOFs.
+
+    # K_ff D_f + K_fp D_p = R_f
+    # K_ff D_f = R_f - K_fp D_p
+    # a = f[free_indices] - K_fp @ prescribed_values
+
+    K_ff, K_fp, K_pf, K_pp, D_p, R_f, R_p, free_indices, _ = partition_global_system(K, f, combined_fixed_nodes, combined_fixed_values)
+
+    # Compute the modified load vector for free DOFs.
+
+    # K_ff D_f + K_fp D_p = R_f
+    # K_ff D_f = R_f - K_fp D_p
+    # a = f[free_indices] - K_fp @ prescribed_values
+
 
     # Solve the reduced system for the free degrees of freedom.
-    u_free = jnp.linalg.solve(K_ff, f_free)
+    # u_free = jnp.linalg.solve(K_ff, f_free)
+
+    u_free = jnp.linalg.solve(K_ff, R_f - K_fp @ D_p)
 
     # Reassemble the full solution.
     u = jnp.zeros(n_nodes)

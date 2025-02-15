@@ -58,13 +58,13 @@ nodes, elements, T = solve_system_partitioned(nx, ny, nz,
                                     base_k=1.0,
                                     density=densities_combined.flatten(),  # density,
                                     h=10.0,  # Convection coefficient
-                                    T_inf=300.0,  # Ambient temperature for convection
+                                    T_inf=30.0,  # Ambient temperature for convection
                                     fixed_nodes=dirichlet_nodes,
                                     fixed_values=200,
                                     robin_nodes=robin_nodes,
                                     conv_area=conv_area,
                                     comp_nodes=comp_nodes,
-                                    comp_temp=50.0)
+                                    comp_temp=150.0)
 
 
 T_np = np.array(T)
