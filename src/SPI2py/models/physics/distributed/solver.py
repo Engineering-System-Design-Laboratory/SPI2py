@@ -133,43 +133,29 @@ def solve_system_partitioned(nx, ny, nz,
 
     # Generate the mesh and element connectivity.
     nodes, elements = generate_mesh_vec(nx, ny, nz, lx, ly, lz)
+
     # Assemble the global stiffness matrix and load vector.
     K, f = assemble_global_stiffness_matrix_vec(nodes, elements, density, base_k)
+
     n_nodes = K.shape[0]
 
     # Apply Robin (convective) boundary conditions.
     K_mod, f_mod = apply_robin_bc(K, f, robin_nodes, h, T_inf, conv_area)
 
     # Partition the system for Dirichlet BCs.
-    # (apply_dirichlet_bc_partition is assumed to enforce that fixed_values is already a 1D array.)
     combined_fixed_nodes, combined_fixed_values = combine_fixed_conditions([fixed_nodes, comp_nodes], [fixed_values, comp_temp])
-    # free_indices, K_ff, f_free = apply_dirichlet_bc(K_mod, f_mod, combined_fixed_nodes, combined_fixed_values)
+    # prescribed_nodes, prescribed_values = fixed_nodes, fixed_values
 
-    # Compute the modified load vector for free DOFs.
+    K_ff, K_fp, K_pf, K_pp, D_p, R_f, R_p, idx_f, idx_p = partition_global_system(K_mod, f_mod, combined_fixed_nodes, combined_fixed_values)
 
+    # Solve the partitioned system for the unknown displacements.
     # K_ff D_f + K_fp D_p = R_f
     # K_ff D_f = R_f - K_fp D_p
-    # a = f[free_indices] - K_fp @ prescribed_values
-
-    K_ff, K_fp, K_pf, K_pp, D_p, R_f, R_p, free_indices, _ = partition_global_system(K, f, combined_fixed_nodes, combined_fixed_values)
-
-    # Compute the modified load vector for free DOFs.
-
-    # K_ff D_f + K_fp D_p = R_f
-    # K_ff D_f = R_f - K_fp D_p
-    # a = f[free_indices] - K_fp @ prescribed_values
-
-
-    # Solve the reduced system for the free degrees of freedom.
-    # u_free = jnp.linalg.solve(K_ff, f_free)
-
-    u_free = jnp.linalg.solve(K_ff, R_f - K_fp @ D_p)
+    D_f = jnp.linalg.solve(K_ff, R_f - K_fp @ D_p)
 
     # Reassemble the full solution.
-    u = jnp.zeros(n_nodes)
-    u = u.at[free_indices].set(u_free)
+    R = jnp.zeros(n_nodes)
+    R = R.at[idx_f].set(D_f)
+    R = R.at[idx_p].set(D_p)
 
-
-    u = u.at[fixed_nodes].set(fixed_values)
-
-    return nodes, elements, u
+    return nodes, elements, R

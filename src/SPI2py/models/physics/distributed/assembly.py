@@ -175,24 +175,17 @@ def partition_global_system(K, f, prescribed_indices, prescribed_values):
     R_f = f[idx_f]
     R_p = f[prescribed_indices]
 
-
-    # Compute the modified load vector for free DOFs.
-
-    # K_ff D_f + K_fp D_p = R_f
-    # K_ff D_f = R_f - K_fp D_p
-    # a = f[free_indices] - K_fp @ prescribed_values
-
     return K_ff, K_fp, K_pf, K_pp, D_p, R_f, R_p, idx_f, idx_p
 
 
 
-def combine_fixed_conditions(fixed_nodes_list, fixed_values_list):
+def combine_fixed_conditions(idx_p, D_p):
     """
     Combine multiple sets of fixed nodes and their prescribed values into single arrays.
 
     Parameters:
-      fixed_nodes_list: a list (or tuple) of 1D arrays of fixed node indices.
-      fixed_values_list: a list (or tuple) of 1D arrays (or scalars) of prescribed values,
+      idx_p: a list (or tuple) of 1D arrays of prescribed node indices.
+      D_p: a list (or tuple) of 1D arrays (or scalars) of prescribed values,
                          corresponding to each set of fixed nodes.
 
     Returns:
@@ -204,7 +197,7 @@ def combine_fixed_conditions(fixed_nodes_list, fixed_values_list):
     """
     combined_nodes = []
     combined_values = []
-    for nodes_i, values_i in zip(fixed_nodes_list, fixed_values_list):
+    for nodes_i, values_i in zip(idx_p, fixed_values_list):
         # Ensure values_i is a 1D array broadcasted to the same length as nodes_i.
         values_i = jnp.broadcast_to(jnp.atleast_1d(values_i), (nodes_i.shape[0],))
         combined_nodes.append(nodes_i)
