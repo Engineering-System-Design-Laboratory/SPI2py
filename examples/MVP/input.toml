@@ -1,0 +1,29 @@
+[components.0]
+description = 'radiator and ion exchanger 1a'
+filepath='models/mdbd/radiator_and_ion_exchanger.xyzr'
+n_spheres=50
+ports = [[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]]
+color='purple'
+
+[components.1]
+description = 'Cross Head Pin'
+filepath='csvs/CrossHead_Pin_5k_300s.csv'
+n_spheres=50
+ports = [[0.0, 0.415, 0.415], [2.850, 0.415, 0.415]]
+color='purple'
+
+[components.2]
+description = 'Bot Eye'
+filepath='csvs/Bot_Eye_5k_300s.csv'
+n_spheres=50
+ports = [[0.225, 0.0, 0.225], [0.225, 0.45, 0.225]]
+color='blue'
+
+[interconnects.0]
+component_1 = 0
+port_1 = 1
+component_2 = 1
+port_2=0
+n_segments=2
+radius=0.1
+color='black'

@@ -197,7 +197,7 @@ def combine_fixed_conditions(idx_p, D_p):
     """
     combined_nodes = []
     combined_values = []
-    for nodes_i, values_i in zip(idx_p, fixed_values_list):
+    for nodes_i, values_i in zip(idx_p, D_p):
         # Ensure values_i is a 1D array broadcasted to the same length as nodes_i.
         values_i = jnp.broadcast_to(jnp.atleast_1d(values_i), (nodes_i.shape[0],))
         combined_nodes.append(nodes_i)

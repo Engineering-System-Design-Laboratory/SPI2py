@@ -1,4 +1,5 @@
 import jax.numpy as jnp
+from jax import vmap
 from .quadrature import shape_functions, shape_functions_vec
 
 

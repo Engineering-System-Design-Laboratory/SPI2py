@@ -2,6 +2,7 @@ import jax.numpy as jnp
 from jax import jacfwd, jacrev
 from openmdao.core.explicitcomponent import ExplicitComponent
 from ..models.utilities.aggregation import kreisselmeier_steinhauser_max, kreisselmeier_steinhauser_min
+from ..models.utilities.input_and_output import read_input_file
 
 
 class Multiplexer(ExplicitComponent):

@@ -8,15 +8,18 @@ from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_
 from SPI2py.models.projection.grid_kernels import create_uniform_kernel
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
 # from SPI2py.models.physics.distributed.assembly import apply_dirichlet_bc, apply_robin_bc, apply_load
+from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
 from SPI2py.models.physics.distributed.solver import fea_3d_thermal, solve_system_partitioned
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
 # Create grid
 # el_size = 0.5
-el_size = 0.2
+el_size = 0.5
 el_centers = create_grid(0, 2, 0, 4, 0,  2, element_size=el_size)
-nx, ny, nz, _, _ = el_centers.shape
-lx, ly, lz = nx * el_size, ny * el_size, nz * el_size
+nodes, elements, el_centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(0, 2, 0, 4, 0,  2, element_size=el_size)
+el_centers = el_centers.reshape(nx, ny, nz, 1, 3)
+# nx, ny, nz, _, _ = el_centers.shape
+# lx, ly, lz = nx * el_size, ny * el_size, nz * el_size
 
 # Read the mesh kernel
 kernel_pos, kernel_rad = create_uniform_kernel(1, mode='circumscription')
@@ -43,7 +46,7 @@ densities_combined = combine_densities(densities_be, min_density=2e-2, penalty_f
 density = jnp.ones(nx * ny * nz)
 
 # For simplicity, assume all elements are “solid” (density = 1.0)
-nodes_temp, elements_temp = generate_mesh_vec(nx, ny, nz, lx, ly, lz)
+nodes_temp, elements_temp, _,  _,_,_,  _,_,_ = generate_mesh_vec(0, 2, 0, 4, 0,  2, element_size=el_size)
 n_elem = elements_temp.shape[0]
 
 conv_area = (lx * ly) / ((nx + 1) * (ny + 1))
@@ -72,7 +75,7 @@ print("Computed nodal temperatures (sample):", T_np[:10])
 nodes_plot = np.array(nodes)
 T_plot = np.array(T)
 
-
+el_centers = np.array(el_centers)
 # Plot
 plotter = pv.Plotter(shape=(2, 3), window_size=(1500, 500))
 

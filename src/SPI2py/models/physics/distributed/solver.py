@@ -1,5 +1,7 @@
 import jax.numpy as jnp
-from .mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
+from jax import vmap
+from time import time_ns
+from .mesh import generate_mesh_vec, find_active_nodes, find_face_nodes, generate_mesh
 from .assembly import assemble_global_stiffness_matrix_vec, apply_dirichlet_bc, apply_robin_bc, combine_fixed_conditions, partition_global_system
 
 
@@ -132,7 +134,10 @@ def solve_system_partitioned(nx, ny, nz,
     """
 
     # Generate the mesh and element connectivity.
-    nodes, elements = generate_mesh_vec(nx, ny, nz, lx, ly, lz)
+    # TODO Update
+    # nodes, elements = generate_mesh_vec(nx, ny, nz, lx, ly, lz)
+    nodes, elements, _, _, _, _, _, _, _ = generate_mesh_vec(0, 2, 0, 4, 0, 2, element_size=0.5)
+
 
     # Assemble the global stiffness matrix and load vector.
     K, f = assemble_global_stiffness_matrix_vec(nodes, elements, density, base_k)

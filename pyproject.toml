@@ -25,6 +25,7 @@ dependencies = [
     "jax",
     "jaxlib",
     "chex",
+    "tomli",
 ]
 
 [project.optional-dependencies]
