@@ -5,7 +5,7 @@ import pyvista as pv
 from SPI2py.models.mechanics.transformations_rigidbody import transform_points
 from SPI2py.models.projection.projection import project_component, combine_densities
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB, plot_stl_file
-from SPI2py.models.projection.grid_kernels import create_uniform_kernel
+from SPI2py.models.projection.mesh_kernels import create_uniform_kernel
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
 # from SPI2py.models.physics.distributed.assembly import apply_dirichlet_bc, apply_robin_bc, apply_load
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
