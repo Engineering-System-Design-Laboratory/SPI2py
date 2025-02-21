@@ -1,7 +1,7 @@
 import numpy as np
 import jax.numpy as jnp
 import pyvista as pv
-from SPI2py.models.projection.grid import create_grid
+# from SPI2py.models.projection.grid import create_grid
 from SPI2py.models.mechanics.transformations_rigidbody import transform_points
 from SPI2py.models.projection.projection import project_component, combine_densities
 from SPI2py.models.utilities.visualization import plot_grid, plot_spheres, plot_AABB, plot_stl_file
@@ -9,17 +9,14 @@ from SPI2py.models.projection.grid_kernels import create_uniform_kernel
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec, find_active_nodes, find_face_nodes
 # from SPI2py.models.physics.distributed.assembly import apply_dirichlet_bc, apply_robin_bc, apply_load
 from SPI2py.models.physics.distributed.mesh import generate_mesh_vec
-from SPI2py.models.physics.distributed.solver import fea_3d_thermal, solve_system_partitioned
+from SPI2py.models.physics.distributed.solver import solve_system_partitioned
 from SPI2py.models.utilities.visualization import plot_temperature_distribution
 
 # Create grid
 # el_size = 0.5
 el_size = 0.5
-el_centers = create_grid(0, 2, 0, 4, 0,  2, element_size=el_size)
 nodes, elements, el_centers, nx, ny, nz, lx, ly, lz = generate_mesh_vec(0, 2, 0, 4, 0,  2, element_size=el_size)
 el_centers = el_centers.reshape(nx, ny, nz, 1, 3)
-# nx, ny, nz, _, _ = el_centers.shape
-# lx, ly, lz = nx * el_size, ny * el_size, nz * el_size
 
 # Read the mesh kernel
 kernel_pos, kernel_rad = create_uniform_kernel(1, mode='circumscription')
@@ -46,18 +43,18 @@ densities_combined = combine_densities(densities_be, min_density=2e-2, penalty_f
 density = jnp.ones(nx * ny * nz)
 
 # For simplicity, assume all elements are “solid” (density = 1.0)
-nodes_temp, elements_temp, _,  _,_,_,  _,_,_ = generate_mesh_vec(0, 2, 0, 4, 0,  2, element_size=el_size)
-n_elem = elements_temp.shape[0]
 
-conv_area = (lx * ly) / ((nx + 1) * (ny + 1))
 
-robin_nodes = find_face_nodes(nodes_temp, jnp.array([0.0, 0.0, 1.0]))
-dirichlet_nodes = find_face_nodes(nodes_temp, jnp.array([0.0, 0.0, -1.0]))
+# conv_area = (lx * ly) / ((nx + 1) * (ny + 1))
+conv_surface_area = el_size**2
+
+robin_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, 1.0]))
+dirichlet_nodes = find_face_nodes(nodes, jnp.array([0.0, 0.0, -1.0]))
 comp_nodes = find_active_nodes(densities_combined, threshold=3e-2)
 
 # Run the FEA pipeline.
-nodes, elements, T = solve_system_partitioned(nx, ny, nz,
-                                    lx, ly, lz,
+nodes, elements, T = solve_system_partitioned(nodes,
+                                    elements,
                                     base_k=1.0,
                                     density=densities_combined.flatten(),  # density,
                                     h=10.0,  # Convection coefficient
@@ -65,7 +62,7 @@ nodes, elements, T = solve_system_partitioned(nx, ny, nz,
                                     fixed_nodes=dirichlet_nodes,
                                     fixed_values=200,
                                     robin_nodes=robin_nodes,
-                                    conv_area=conv_area,
+                                    conv_area=conv_surface_area,
                                     comp_nodes=comp_nodes,
                                     comp_temp=150.0)
 
